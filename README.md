@@ -1,56 +1,25 @@
+# combined-ssl
+welcome to my thesis project's github repo! 
+
+## getting started
 to run the code:
+```shell
+python main.py --dataset [dataset_name] --encoder [encoder_name] --model [model_type] --ssl [ssl method]
 
-python main.py --d --r --e --
+without []
 
-current structure of the code
+dataset_name : debug
+encoder : vgg
+model_type : supervised, unsupervised, combined
+ssl_method : simclr
+```
 
-├── aux-losses
-├── data
-├── encoders
-│   ├── __init__.py
-│   ├── base_encoder.py : class BaseEncoder
-│   ├── resnet.py: class ResNetEncoder that inherits BaseEncoder
-│   ├── vgg.py: class VGGEncoder that inherits BaseEncoder
-│   └── vit.py: class ViTEncoder that inherits BaseEncoder
-├── losses
-│   ├── __init__.py
-│   ├── simclr_loss.py
-│   └── supervised_loss.py
-├── models
-│   ├── __init__.py
-│   ├── combined_simclr.py : class CombinedSimCLR
-│   ├── supervised.py : class SupervisedModel
-│   └── unsupervised_simclr.py : class SimCLR
-└── README.md
+## future implementations
 
-geplante Experimente
+model : supervised learning , self-supervised learning, combined learning (supervised + ssl)
 
-folder: .py files
-model: supervised learning , self-supervised learning, combined learning (supervised + )
---SSL methods: SimCLR, MoCo, SimSiam, Jigsaw Puzzle, VAE, SimMIM
-backbone: VGG (for testing purposes), Resnet-10, Resnet-50 and ViT-B
-dataset:  10% CIFAR-10 (for testing purposes), CIFAR-10, CIFAR-100, ImageNet and Caltech-101
-losses: every contrastive losses plus combined losses
+SSL methods : SimCLR✅, MoCo📝, SimSiam📝, Jigsaw Puzzle📝, VAE📝, SimMIM📝
 
+backbone : VGG✅, Resnet-10🚧, Resnet-50🚧 and ViT-B🚧
 
-
-batch size:
-
-CIFAR-10/100: 256
-Caltech-101: 128
-ImageNet: 512 (or largest possible on your cluster)
-Ablation study: Include a section testing different batch sizes (128, 256, 512, 1024) 
-
-
-Training Epochs:
-
-300 epochs for pre-training, 100 epochs for fine-tuning, 
-300 epochs for combined and supervised
-
-Learning rates: 
-
-
-
-what stays the same
-
-
+dataset :  debug (10% CIFAR-10)✅, CIFAR-10🚧, CIFAR-100🚧, ImageNet🚧 and Caltech-101🚧
