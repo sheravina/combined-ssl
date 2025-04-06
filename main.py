@@ -29,11 +29,11 @@ if __name__ == "__main__":
     )  # ignored if model is supervised
 
     args = parser.parse_args()
-    
-    # start training neural network!! 
+
+    # start training neural network!!
     nn = NNTrain(
-                dataset_name=args.dataset,
-                ssl_method=args.ssl,
-                encoder_name=args.encoder,
-                model_name=args.model
-            )
+        dataset_name=args.dataset,
+        ssl_method=args.ssl,
+        encoder_name=args.encoder,
+        model_name=args.model,
+    )

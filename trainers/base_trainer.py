@@ -16,10 +16,10 @@ class BaseTrainer:
             device: Device to run training on ('cuda' or 'cpu')
         """
 
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.model = model.to(self.device)
-       
+
         self.train_loader = train_loader
         self.test_loader = test_loader
         self.optimizer = optimizer
