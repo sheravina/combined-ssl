@@ -4,7 +4,7 @@ from losses.simclr_loss import simclr_loss
 from .base_trainer import BaseTrainer
 
 # Finetuner related packages
-from models import UniversalFineTuner
+from models import UniversalFineTuner, SupervisedModel
 import torch.nn as nn
 import torch.optim as optim
 from trainers import SupervisedTrainer
@@ -59,6 +59,7 @@ class SimCLRTrainer(BaseTrainer):
     
     def finetune_step(self):
         ft_model = UniversalFineTuner(self.model, num_classes=10).to(self.device)
+        # ft_model = SupervisedModel(self.model.encoder, num_classes=10).to(self.device)
 
         for param in ft_model.encoder.parameters():
             param.requires_grad = False
