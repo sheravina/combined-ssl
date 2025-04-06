@@ -3,11 +3,16 @@ from tqdm import tqdm
 from losses.simclr_loss import simclr_loss
 from .base_trainer import BaseTrainer
 
+# Finetuner related packages
+from models import UniversalFineTuner
+import torch.nn as nn
+import torch.optim as optim
+from trainers import SupervisedTrainer
 
 class SimCLRTrainer(BaseTrainer):
     """Trainer for self-supervised contrastive learning (SimCLR)."""
 
-    def __init__(self, model, train_loader, optimizer, epochs, test_loader, temperature=0.5):
+    def __init__(self, model, train_loader, test_loader, ft_loader, optimizer, epochs,  temperature=0.5):
         """
         Initialize the SimCLR trainer.
 
@@ -18,7 +23,7 @@ class SimCLRTrainer(BaseTrainer):
             device: Device to run training on ('cuda' or 'cpu')
             temperature: Temperature parameter for contrastive loss
         """
-        super().__init__(model, train_loader, test_loader, optimizer, epochs)
+        super().__init__(model, train_loader, test_loader, ft_loader, optimizer, epochs)
         self.temperature = temperature
 
     def train_step(self):
@@ -52,6 +57,25 @@ class SimCLRTrainer(BaseTrainer):
         train_loss = train_loss / len(self.train_loader)
         return train_loss
     
+    def finetune_step(self):
+        ft_model = UniversalFineTuner(self.model, num_classes=10).to(self.device)
+
+        for param in ft_model.encoder.parameters():
+            param.requires_grad = False
+    
+        # Only train the classifier layer
+        ft_optimizer = optim.Adam(ft_model.classifier.parameters(), lr=1e-4)
+
+        ft_trainer = SupervisedTrainer(model=ft_model
+                                            ,train_loader=self.ft_loader
+                                            ,test_loader=self.test_loader
+                                            ,ft_loader = None
+                                            ,optimizer=ft_optimizer
+                                            ,epochs=self.epochs)
+        
+        return ft_trainer
+
+    
     def train(self):
         """
         Trains and tests the model for the specified number of epochs.
@@ -59,16 +83,20 @@ class SimCLRTrainer(BaseTrainer):
         Returns:
             results: Dictionary containing lists of training losses, test losses, and test accuracies
         """
-        results = {"train_loss": []}
+        results = {"ssl_loss": []}
         
         for epoch in range(self.epochs):
             # Train for one epoch
-            train_loss = self.train_step()
+            ssl_loss = self.train_step()
             
             # Store results
-            results["train_loss"].append(train_loss)
+            results["ssl_loss"].append(ssl_loss)
             
             # Print progress
-            print(f"Epoch {epoch+1}/{self.epochs}, Train Loss: {train_loss:.4f}")
+            print(f"Epoch {epoch+1}/{self.epochs}, Train Loss: {ssl_loss:.4f}")
+
+        
+        ft_results = self.finetune_step().train()
+        results.update(ft_results)
         
         return results

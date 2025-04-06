@@ -5,7 +5,7 @@ from tqdm import tqdm
 class BaseTrainer:
     """Base class for all trainers."""
 
-    def __init__(self, model, train_loader, test_loader, optimizer, epochs):
+    def __init__(self, model, train_loader, test_loader, ft_loader, optimizer, epochs):
         """
         Initialize the trainer.
 
@@ -22,6 +22,7 @@ class BaseTrainer:
 
         self.train_loader = train_loader
         self.test_loader = test_loader
+        self.ft_loader = ft_loader
         self.optimizer = optimizer
         self.epochs = epochs
 

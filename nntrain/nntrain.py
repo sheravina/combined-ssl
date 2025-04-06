@@ -52,17 +52,17 @@ class NNTrain:
         if self.model_name == MOD_SUPERVISED:
             self.model = SupervisedModel(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
             self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = SupervisedTrainer(model=self.model, train_loader=self.train_loader, test_loader=self.test_loader, optimizer=self.optimizer, epochs=self.epochs)
+            self.trainer = SupervisedTrainer(model=self.model, train_loader=self.train_loader, test_loader=self.test_loader, ft_loader=None, optimizer=self.optimizer, epochs=self.epochs)
             
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMCLR:
             self.model = SimCLR(base_encoder=self.encoder, input_shape = self.input_shape)
             self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = SimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, optimizer=self.optimizer, epochs=self.epochs)
+            self.trainer = SimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
         
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMCLR:
             self.model = CombinedSimCLR(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)
             self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = CombinedSimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, optimizer=self.optimizer, epochs=self.epochs)
+            self.trainer = CombinedSimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=None, optimizer=self.optimizer, epochs=self.epochs)
             
         self.trainer.train()
         

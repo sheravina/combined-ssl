@@ -13,6 +13,7 @@ class CombinedSimCLRTrainer(BaseTrainer):
         model,
         train_loader,
         test_loader,
+        ft_loader,
         optimizer,
         epochs,
         temperature=0.5,
@@ -29,7 +30,7 @@ class CombinedSimCLRTrainer(BaseTrainer):
             temperature: Temperature parameter for contrastive loss
             alpha: Weight for supervised loss
         """
-        super().__init__(model, train_loader, test_loader, optimizer, epochs)
+        super().__init__(model, train_loader, test_loader, ft_loader, optimizer, epochs)
         self.temperature = temperature
         self.alpha = alpha
         self.criterion = SupervisedLoss()

@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 from tqdm import tqdm
 from losses.supervised_loss import SupervisedLoss
 from .base_trainer import BaseTrainer
@@ -7,7 +8,7 @@ from .base_trainer import BaseTrainer
 class SupervisedTrainer(BaseTrainer):
     """Trainer for supervised learning."""
 
-    def __init__(self, model, train_loader, test_loader, optimizer, epochs):
+    def __init__(self, model, train_loader, test_loader, ft_loader, optimizer, epochs):
         """
         Initialize the supervised trainer.
 
@@ -19,8 +20,8 @@ class SupervisedTrainer(BaseTrainer):
             device: Device to run training on (if None, will use 'cuda' if available, else 'cpu')
         """
         # Auto-detect device if not specified
-        super().__init__(model, train_loader, test_loader, optimizer, epochs)
-        self.criterion = SupervisedLoss()
+        super().__init__(model, train_loader, test_loader, ft_loader, optimizer, epochs)
+        self.criterion = nn.CrossEntropyLoss()
 
     def train_step(self):
         """
@@ -35,7 +36,6 @@ class SupervisedTrainer(BaseTrainer):
         for batch, (images, labels) in enumerate(self.train_loader):
             images, labels = images.to(self.device), labels.to(self.device)
             pred = self.model(images)
-            
             loss = self.criterion(pred, labels)
             train_loss += loss.item() 
 
