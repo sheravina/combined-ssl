@@ -5,7 +5,7 @@ from tqdm import tqdm
 class BaseTrainer:
     """Base class for all trainers."""
 
-    def __init__(self, model, train_loader, optimizer, epochs):
+    def __init__(self, model, train_loader, test_loader, optimizer, epochs):
         """
         Initialize the trainer.
 
@@ -21,10 +21,11 @@ class BaseTrainer:
         self.model = model.to(self.device)
        
         self.train_loader = train_loader
+        self.test_loader = test_loader
         self.optimizer = optimizer
         self.epochs = epochs
 
-    def train(self, epochs=100):
+    def train(self):
         """
         Base training method.
         This is for reference only and should be implemented by specific trainers.

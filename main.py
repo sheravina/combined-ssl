@@ -31,22 +31,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # start training neural network!! 
-    # print(args)
-
-
-    try:
-        # al.run()
-        # parser.print_help()
-        nn = NNTrain(
+    nn = NNTrain(
                 dataset_name=args.dataset,
                 ssl_method=args.ssl,
                 encoder_name=args.encoder,
                 model_name=args.model
             )
-        # pprint(nn.__dict__)
-    except Exception as e:
-        # file_path = al.data_logger.log_primary_results(al.test_loss_list, al.best_dropout_rate_list, al.best_l2_reg_list, al.test_accuracy_list)
-        # al.log_params()
-        # al.visualizer.plot_results(file_path)
-        print("An error occurred! ")
-        print(e)

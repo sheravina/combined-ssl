@@ -1,6 +1,4 @@
-
-
-# TODO: add seeds, dataset, ssl-methods transformation check gpu or not
+# TODO: add seeds, batch size, epochs, learning rate, weight decay to somewhere
 import torch
 import torch.optim as optim
 from data import DataManager
@@ -19,9 +17,10 @@ class NNTrain:
 
         # still hard coded!
         self.batch_size = 32 
-        self.epochs = 10
+        self.epochs = 100
         self.learning_rate = 1e-4
         self.weight_decay = 1e-4
+        self.seed = 42
 
         self.load_data()
         self.data_char()
@@ -30,9 +29,10 @@ class NNTrain:
 
     def load_data(self):
         # check dataset name
-        dm = DataManager(dataset_name=self.dataset_name, ssl_method=self.ssl_method, batch_size=self.batch_size)
-        train_loader, test_loader = dm.create_loader()
+        dm = DataManager(dataset_name=self.dataset_name, ssl_method=self.ssl_method, batch_size=self.batch_size, seed=self.seed)
+        train_loader, cont_loader, test_loader = dm.create_loader()
         self.train_loader = train_loader
+        self.cont_loader = cont_loader
         self.test_loader = test_loader
 
     def data_char(self):
@@ -52,22 +52,17 @@ class NNTrain:
         if self.model_name == MOD_SUPERVISED:
             self.model = SupervisedModel(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
             self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = SupervisedTrainer(model=self.model, train_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
+            self.trainer = SupervisedTrainer(model=self.model, train_loader=self.train_loader, test_loader=self.test_loader, optimizer=self.optimizer, epochs=self.epochs)
             
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMCLR:
             self.model = SimCLR(base_encoder=self.encoder, input_shape = self.input_shape)
             self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = SimCLRTrainer(model=self.model, train_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
+            self.trainer = SimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, optimizer=self.optimizer, epochs=self.epochs)
         
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMCLR:
             self.model = CombinedSimCLR(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)
             self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = CombinedSimCLRTrainer(model=self.model, train_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
+            self.trainer = CombinedSimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, optimizer=self.optimizer, epochs=self.epochs)
             
         self.trainer.train()
         
-            
-            
-    
-    def train(self):
-        print(f"I am training {self.dataset_name}")
