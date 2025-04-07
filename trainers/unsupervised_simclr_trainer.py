@@ -59,10 +59,6 @@ class SimCLRTrainer(BaseTrainer):
     
     def finetune_step(self):
         ft_model = UniversalFineTuner(self.model, num_classes=10).to(self.device)
-        # ft_model = SupervisedModel(self.model.encoder, num_classes=10).to(self.device)
-
-        for param in ft_model.encoder.parameters():
-            param.requires_grad = False
     
         # Only train the classifier layer
         ft_optimizer = optim.Adam(ft_model.classifier.parameters(), lr=1e-4)

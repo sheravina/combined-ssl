@@ -5,7 +5,7 @@ class UniversalFineTuner(nn.Module):
         super(UniversalFineTuner, self).__init__()
         self.encoder = unsupervised_model.encoder
         self.flatten = nn.Flatten()
-        self.classifier = nn.Linear(unsupervised_model.feature_dim *unsupervised_model.feature_dim *num_classes, num_classes)
+        self.classifier = nn.Linear(unsupervised_model.feature_size, num_classes)
         
     def forward(self, x):
         x = self.encoder(x)

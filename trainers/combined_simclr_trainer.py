@@ -119,3 +119,5 @@ class CombinedSimCLRTrainer(BaseTrainer):
             print(f"Epoch {epoch+1}/{self.epochs}, Train Loss: {train_loss:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
         
         return results
+    
+    # results folder and timestamp it

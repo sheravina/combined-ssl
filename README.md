@@ -20,7 +20,7 @@ models : supervised learning , self-supervised learning, combined learning (supe
 
 SSL methods : SimCLR✅, MoCo📝, SimSiam📝, Jigsaw Puzzle📝, VAE📝, SimMIM📝
 
-encoders : VGG✅, Resnet-10🚧, Resnet-50🚧 and ViT-B🚧
+encoders : VGG✅, Resnet-18✅, Resnet-50✅ and ViT-B🚧
 
 datasets :  debug (10% CIFAR-10)✅, CIFAR-10🚧, CIFAR-100🚧, ImageNet🚧 and Caltech-101🚧
 

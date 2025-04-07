@@ -7,6 +7,7 @@ from pprint import pprint
 from encoders import *
 from models import *
 from trainers import *
+from torchinfo import summary
 
 class NNTrain:
     def __init__(self, dataset_name: str, ssl_method: str, encoder_name: str, model_name:str) -> None:
@@ -17,7 +18,7 @@ class NNTrain:
 
         # still hard coded!
         self.batch_size = 32 
-        self.epochs = 100
+        self.epochs = 5
         self.learning_rate = 1e-4
         self.weight_decay = 1e-4
         self.seed = 42
@@ -45,8 +46,15 @@ class NNTrain:
     def init_encoder(self):
         if self.encoder_name == ENC_VGG:
             self.encoder = VGGEncoder()
-            # print(self.encoder.calc_feat_size(input_shape = self.input_shape))
-            # pprint(self.encoder)
+
+        elif self.encoder_name == ENC_RESNET18: 
+            self.encoder = ResNetEncoder(model_type=ENC_RESNET18)
+        
+        elif self.encoder_name == ENC_RESNET50:
+            self.encoder = ResNetEncoder(model_type=ENC_RESNET50)
+
+        elif self.encoder_name == ENC_VIT:
+            self.encoder = ViTEncoder()
     
     def init_model_trainer(self):
         if self.model_name == MOD_SUPERVISED:

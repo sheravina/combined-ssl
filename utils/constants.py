@@ -15,7 +15,7 @@ SSL_SIMMIM = "simmim"
 
 # Encoder  (vgg, resnet10, resnet50, vit)
 ENC_VGG = "vgg"
-ENC_RESNET10 = "resnet10"
+ENC_RESNET18 = "resnet18"
 ENC_RESNET50 = "resnet50"
 ENC_VIT = "vit"
 

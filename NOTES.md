@@ -4,32 +4,39 @@ miscellaneous questions to for meetings with supervisor
 
 ## Questions to be asked
 
-📅 06.04.2025
+📅 14.04.2025
 
-- since the finetuning uses the same kind of supervised model (encoder with classifier head) and trainer, can we reuse the class instance and load simclr's encoder's weights to the encoder and run it ? or must another class instance be made? should we reset the weights somewhere? and how to do this again
-
-- for resnets and vit, can we use the built in torchvision models?
-
-    ```
-    from torchvision.models import vit_b_16
-    ```
-- are there any best practices out there to write a neural network implementation? any recommendations for future 
-
-- i have 6 ssl methods to implement, can i take out MoCo? reason: it uses the same loss function as simclr and simclr is better
-
-- when writing the code for ssl methods, what would you recommend where to learn it from aside from official paper codes, can you actually "follow" codes that are not officially published in a paper? 
-
-please review code ? 
-
-cluster update ?
-
-administrative:
-
-FIT Slides, what to prepare
+J's input : will this work: for ablation study using different encoder for the contrastive loss and supervised loss
 
 ## Meeting Notes
 
 📅 07.04.2025 
+
+FIT: first idea: everyone who listens should understand the basic problem setting
+
+diff between combined training vs two stage training
+
+background knowledge : pre training is mostly unsupervised
+
+two stage training: copying pretrain weights and do ft
+
+combined training: train both losses at the same time
+
+test performance differences between combined training and two-stage training -- research question 
+
+systematic difference
+
+is there a systematic diff between these two
+
+overview of planned experiments
+
+one contrastive learning paper 
+
+give a hint in planned experiments and we will test different pre training 
+
+one of reconstruction loss, jigsaw puzzle, denoising autoencoder 
+
+test code
 
 
 

@@ -8,7 +8,7 @@ class SimCLR(nn.Module):
         self,
         base_encoder,
         input_shape=None,
-        feature_dim=None,
+        feature_size=None,
         hidden_units=1024,
         proj_units=128,
     ):
@@ -18,16 +18,16 @@ class SimCLR(nn.Module):
         self.encoder = base_encoder
 
         # Get the output dimension from the last layer
-        if feature_dim is not None:
-            self.feature_dim = feature_dim
+        if feature_size is not None:
+            self.feature_size = feature_size
         elif input_shape is not None:
-            self.feature_dim = self.encoder.calc_feat_dim(input_shape)
+            self.feature_size = self.encoder.calc_feat_size(input_shape)
         else:
-            raise ValueError("Either feature_dim or input_shape must be provided")
+            raise ValueError("Either feature_size or input_shape must be provided")
 
         # Add a projection head (MLP with one hidden layer)
         self.projection_head = nn.Sequential(
-            nn.Linear(self.feature_dim, hidden_units),
+            nn.Linear(self.feature_size, hidden_units),
             nn.ReLU(),
             nn.Linear(hidden_units, hidden_units),
             nn.ReLU(),

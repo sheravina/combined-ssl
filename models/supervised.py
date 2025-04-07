@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-
 class SupervisedModel(nn.Module):
     def __init__(
         self,
@@ -19,10 +18,9 @@ class SupervisedModel(nn.Module):
         elif input_shape is not None:
             self.feature_size = self.encoder.calc_feat_size(input_shape)
         else:
-            raise ValueError("Either feature_dim or input_shape must be provided")
+            raise ValueError("Either feature_size or input_shape must be provided")
 
         self.classifier_head = nn.Sequential(
-            nn.Flatten(),
             nn.Linear(in_features=self.feature_size, out_features=output_shape),
         )
 

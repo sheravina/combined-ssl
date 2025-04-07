@@ -23,8 +23,11 @@ class VGGEncoder(BaseEncoder):
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
         )
+        
+        self.flatten = nn.Flatten()
 
     def forward(self, x):
         x = self.block_1(x)
         x = self.block_2(x)
+        x = self.flatten(x) #add a flatten layer at every encoder
         return x
