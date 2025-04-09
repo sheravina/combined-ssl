@@ -12,7 +12,7 @@ from trainers import SupervisedTrainer
 class SimCLRTrainer(BaseTrainer):
     """Trainer for self-supervised contrastive learning (SimCLR)."""
 
-    def __init__(self, model, train_loader, test_loader, ft_loader, optimizer, epochs,  temperature=0.5):
+    def __init__(self, model, train_loader, test_loader, ft_loader, optimizer, epochs, temperature=0.5):
         """
         Initialize the SimCLR trainer.
 
@@ -58,11 +58,9 @@ class SimCLRTrainer(BaseTrainer):
         return train_loss
     
     def finetune_step(self):
-        ft_model = UniversalFineTuner(self.model, num_classes=10).to(self.device)
-    
+        ft_model = UniversalFineTuner(self.model).to(self.device)
         # Only train the classifier layer
-        ft_optimizer = optim.Adam(ft_model.classifier.parameters(), lr=1e-4)
-
+        ft_optimizer = optim.Adam(ft_model.classifier_head.parameters(), lr=1e-4)
         ft_trainer = SupervisedTrainer(model=ft_model
                                             ,train_loader=self.ft_loader
                                             ,test_loader=self.test_loader
@@ -83,16 +81,10 @@ class SimCLRTrainer(BaseTrainer):
         results = {"ssl_loss": []}
         
         for epoch in range(self.epochs):
-            # Train for one epoch
             ssl_loss = self.train_step()
-            
-            # Store results
             results["ssl_loss"].append(ssl_loss)
-            
-            # Print progress
-            print(f"Epoch {epoch+1}/{self.epochs}, Train Loss: {ssl_loss:.4f}")
+            print(f"Epoch {epoch+1}/{self.epochs}, SSL Loss: {ssl_loss:.4f}")
 
-        
         ft_results = self.finetune_step().train()
         results.update(ft_results)
         
