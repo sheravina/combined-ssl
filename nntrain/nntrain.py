@@ -23,7 +23,7 @@ class NNTrain:
 
         # still hard coded!
         self.batch_size = 32 
-        self.epochs = 5 
+        self.epochs = 2 
         self.learning_rate = 1e-4
         self.weight_decay = 1e-4
         self.seed = 42
@@ -51,10 +51,13 @@ class NNTrain:
 
     def data_char(self):
         # Grab data characteristics
-        images, labels = next(iter(self.train_loader))
-        self.input_shape = images[0].shape
-        self.output_shape = len(torch.unique(labels))
+        images_cont, labels_cont = next(iter(self.cont_loader))
+        images_train, labels_train = next(iter(self.train_loader))
+        self.input_shape = images_train[0].shape
+        self.input_shape_jigsaw = images_cont[0][0][0].shape
         self.color_channels = self.input_shape[1]
+        self.output_shape = len(torch.unique(labels_cont))
+        
     
     def init_encoder(self):
         if self.encoder_name == ENC_VGG:
@@ -84,6 +87,16 @@ class NNTrain:
             self.model = CombinedSimCLR(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)
             self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
             self.trainer = CombinedSimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=None, optimizer=self.optimizer, epochs=self.epochs)
+
+        elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_JIGSAW:
+            self.model = Jigsaw(base_encoder=self.encoder, input_shape = self.input_shape_jigsaw, ft_input_shape=self.input_shape, output_shape = self.output_shape)
+            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
+            self.trainer = JigsawTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
+        
+        elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_JIGSAW:
+            self.model = CombinedJigsaw(base_encoder=self.encoder, input_shape = self.input_shape_jigsaw, ft_input_shape=self.input_shape, output_shape = self.output_shape)
+            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
+            self.trainer = CombinedJigsawTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
             
         self.results = self.trainer.train()
 

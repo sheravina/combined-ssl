@@ -8,6 +8,7 @@ class SimCLR(BaseModel):
         # Pass parameters to the parent class
         super().__init__(base_encoder=base_encoder, input_shape=input_shape, feature_size=feature_size, output_shape=output_shape, hidden_units=hidden_units,proj_units=proj_units)
         self.output_shape = output_shape
+        self.ft_input_shape = input_shape
 
     def forward(self, x):
         # Move tensor to the same device as model parameters

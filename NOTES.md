@@ -10,46 +10,17 @@ J's input : will this work: for ablation study using different encoder for the c
 
 ## Meeting Notes
 
-📅 07.04.2025 
-
-FIT: first idea: everyone who listens should understand the basic problem setting
-
-diff between combined training vs two stage training
-
-background knowledge : pre training is mostly unsupervised
-
-two stage training: copying pretrain weights and do ft
-
-combined training: train both losses at the same time
-
-test performance differences between combined training and two-stage training -- research question 
-
-systematic difference
-
-is there a systematic diff between these two
-
-overview of planned experiments
-
-one contrastive learning paper 
-
-give a hint in planned experiments and we will test different pre training 
-
-one of reconstruction loss, jigsaw puzzle, denoising autoencoder 
-
-test code
-
-
-
+📅 14.04.2025
 
 ## Progress updates
 
 📅 13.04.2025 -
 
-📅 12.04.2025 -
+📅 12.04.2025 - jigsaw done
 
-📅 11.04.2025 - 
+📅 11.04.2025 - jigsaw progress
 
-📅 09.04.2025 - start creating new ssl method
+📅 09.04.2025 - cleaning models and finetuner for ssl, added save to excel, find resources to implement other methods
 
 📅 07.04.2025 - second meeting! + implementation feedback + slides for FIT
 
@@ -64,5 +35,17 @@ test code
 📅 31.03.2025 - first meeting! + proposal draft sent (email)
 
 📅 30.03.2025 - first SimCLR implementation
+
+# Resources to Implement
+
+SimMIM (Hard): https://github.com/microsoft/SimMIM/tree/main
+
+or Context Autoencoder: https://github.com/lxtGH/CAE
+
+Denoising Autoencoder (Easy): https://github.com/YeonwooSung/SelfSupervisedLearning_PyTorch/tree/master/AutoEncoder/DenoisingAutoEncoder
+
+Variational Autoencoder: https://github.com/AntixK/PyTorch-VAE/tree/master 
+
+Variational Autoencoder WITH EXPLANATIONS: https://hunterheidenreich.com/posts/modern-variational-autoencoder-in-pytorch/
 
 

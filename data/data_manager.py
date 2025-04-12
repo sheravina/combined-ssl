@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import SubsetRandomSampler, DataLoader
 from torchvision import datasets
 from utils.constants import *
-from transformations import SimCLRTransformations
+from transformations import SimCLRTransformations, JigsawTransformations
 from transformations import basenorm_transformation, base_transformation
 
 class DataManager:
@@ -34,10 +34,14 @@ class DataManager:
 
     def create_contrastive_transform(self):
         self.transformation_train = basenorm_transformation   
-        self.transformation_test = base_transformation    
+          
 
         if self.ssl_method == SSL_SIMCLR:
+            self.transformation_test = base_transformation  
             self.transformation_contrastive = SimCLRTransformations(n_views=2,include_original=True)
+        elif self.ssl_method == SSL_JIGSAW:
+            self.transformation_test = JigsawTransformations(num_permutations= 1000)
+            self.transformation_contrastive = JigsawTransformations(num_permutations= 1000)
         else:
             raise NotImplementedError("transformation not implemented yet")
     
@@ -79,8 +83,8 @@ class DataManager:
         if self.dataset_name == DEBUG_DATASET:
             
             all_labels = []
-            for i in range(len(self.test_dataset)):
-                img, label = self.test_dataset[i]
+            for i in range(len(self.train_dataset)):
+                img, label = self.train_dataset[i]
                 all_labels.append(label)
 
             # Convert to numpy array for easier handling
