@@ -18,7 +18,7 @@ ssl_method : simclr
 
 models : supervised learning , self-supervised learning, combined learning (supervised + ssl)
 
-SSL methods : SimCLR✅, Jigsaw Puzzle🚧, VAE📝, DAE📝, SimMIM📝, SimSiam or BYOL📝
+SSL methods : SimCLR✅, Jigsaw Puzzle🚧, SimSiam🚧, VAE📝, DAE📝, MAE📝
 
 encoders : VGG✅, Resnet-18✅, Resnet-50✅ and ViT-B🚧
 

@@ -14,7 +14,19 @@ J's input : will this work: for ablation study using different encoder for the c
 
 ## Progress updates
 
-📅 13.04.2025 -
+📅 21.04.2025 - autoencoders (mae, vae, dae)
+
+📅 20.04.2025 - autoencoders (mae, vae, dae)
+
+📅 19.04.2025 - autoencoders (mae, vae, dae)
+
+📅 18.04.2025 - autoencoders (mae, vae, dae)
+
+📅 15.04.2025 - autoencoders + first idea talk
+
+📅 14.04.2025 - weekly meeting 
+
+📅 13.04.2025 - simsiam done
 
 📅 12.04.2025 - jigsaw done
 

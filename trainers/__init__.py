@@ -4,6 +4,8 @@ from .unsupervised_simclr_trainer import SimCLRTrainer
 from .combined_simclr_trainer import CombinedSimCLRTrainer
 from .unsupervised_jigsaw_trainer import JigsawTrainer
 from .combined_jigsaw_trainer import CombinedJigsawTrainer
+from .unsupervised_simsiam_trainer import SimSiamTrainer
+from .combined_simsiam_trainer import CombinedSimSiamTrainer
 
 __all__ = [
     "BaseTrainer",
@@ -11,5 +13,7 @@ __all__ = [
     "SimCLRTrainer",
     "CombinedSimCLRTrainer",
     "JigsawTrainer",
-    "CombinedJigsawTrainer"
+    "CombinedJigsawTrainer",
+    "SimSiamTrainer",
+    "CombinedSimSiamTrainer"
 ]

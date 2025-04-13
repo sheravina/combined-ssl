@@ -6,14 +6,14 @@ from utils.constants import *
 class ResNetEncoder(BaseEncoder):
     """ResNet backbone encoder using torchvision models"""
 
-    def __init__(self, model_type):
+    def __init__(self, model_type, zero_init_residual=False):
         super().__init__()
 
         # Create the model but without pretrained weights
         if model_type == ENC_RESNET18:
-            model = resnet18(weights=None)
+            model = resnet18(weights=None, zero_init_residual=zero_init_residual)
         elif model_type == ENC_RESNET50:
-            model = resnet50(weights=None)
+            model = resnet50(weights=None, zero_init_residual=zero_init_residual)
         else:
             raise ValueError(f"Unsupported model type: {model_type}")
 

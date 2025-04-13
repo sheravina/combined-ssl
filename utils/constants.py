@@ -7,11 +7,11 @@ IMAGENET_DATASET = "imagenet"
 
 # SSL Method simclr, moco, simsiam, jigsaw, vae, simmim
 SSL_SIMCLR = "simclr"
-SSL_MOCO = "moco"
-SSL_SIMSIAM = "simsian"
 SSL_JIGSAW = "jigsaw"
+SSL_SIMSIAM = "simsiam"
+SSL_DAE = "dae"
 SSL_VAE = "vae"
-SSL_SIMMIM = "simmim"
+SSL_MAE = "mae"
 
 # Encoder  (vgg, resnet10, resnet50, vit)
 ENC_VGG = "vgg"

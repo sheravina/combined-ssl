@@ -23,7 +23,7 @@ class NNTrain:
 
         # still hard coded!
         self.batch_size = 32 
-        self.epochs = 2 
+        self.epochs = 5 
         self.learning_rate = 1e-4
         self.weight_decay = 1e-4
         self.seed = 42
@@ -97,7 +97,17 @@ class NNTrain:
             self.model = CombinedJigsaw(base_encoder=self.encoder, input_shape = self.input_shape_jigsaw, ft_input_shape=self.input_shape, output_shape = self.output_shape)
             self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
             self.trainer = CombinedJigsawTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
-            
+
+        elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMSIAM:
+            self.model = SimSiam(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
+            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
+            self.trainer = SimSiamTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
+
+        elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMSIAM:
+            self.model = CombinedSimSiam(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)
+            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
+            self.trainer = CombinedSimSiamTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=None, optimizer=self.optimizer, epochs=self.epochs)
+    
         self.results = self.trainer.train()
 
     def save_results_to_excel(self):
