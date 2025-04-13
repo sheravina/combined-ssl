@@ -9,9 +9,10 @@ IMAGENET_DATASET = "imagenet"
 SSL_SIMCLR = "simclr"
 SSL_JIGSAW = "jigsaw"
 SSL_SIMSIAM = "simsiam"
+SSL_VICREG = "vicreg"
 SSL_DAE = "dae"
 SSL_VAE = "vae"
-SSL_MAE = "mae"
+
 
 # Encoder  (vgg, resnet10, resnet50, vit)
 ENC_VGG = "vgg"

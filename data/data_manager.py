@@ -36,7 +36,7 @@ class DataManager:
         self.transformation_train = basenorm_transformation   
           
 
-        if self.ssl_method == SSL_SIMCLR or self.ssl_method == SSL_SIMSIAM:
+        if self.ssl_method == SSL_SIMCLR or self.ssl_method == SSL_SIMSIAM or self.ssl_method == SSL_VICREG:
             self.transformation_test = base_transformation  
             self.transformation_contrastive = SimCLRTransformations(n_views=2,include_original=True)
         elif self.ssl_method == SSL_JIGSAW:

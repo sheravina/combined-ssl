@@ -7,6 +7,8 @@ from .unsupervised_jigsaw import Jigsaw
 from .combined_jigsaw import CombinedJigsaw
 from .unsupervised_simsiam import SimSiam
 from .combined_simsiam import CombinedSimSiam
+from .unsupervised_vicreg import VICReg
+from .combined_vicreg import CombinedVICReg
 
 __all__ = ["BaseModel"
            , "SupervisedModel"
@@ -16,4 +18,6 @@ __all__ = ["BaseModel"
            , "Jigsaw"
            , "CombinedJigsaw"
            , "SimSiam"
-           , "CombinedSimSiam"]
+           , "CombinedSimSiam"
+           , "VICReg"
+           , "CombinedVICReg"]

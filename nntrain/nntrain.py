@@ -108,6 +108,16 @@ class NNTrain:
             self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
             self.trainer = CombinedSimSiamTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=None, optimizer=self.optimizer, epochs=self.epochs)
     
+        elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_VICREG:
+            self.model = VICReg(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
+            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
+            self.trainer = VICRegTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
+
+        elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_VICREG:
+            self.model = CombinedVICReg(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)
+            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
+            self.trainer = CombinedVICRegTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=None, optimizer=self.optimizer, epochs=self.epochs)
+    
         self.results = self.trainer.train()
 
     def save_results_to_excel(self):

@@ -36,5 +36,5 @@ if __name__ == "__main__":
         ssl_method=args.ssl,
         encoder_name=args.encoder,
         model_name=args.model,
-        save_toggle=True
+        save_toggle=False
     )
