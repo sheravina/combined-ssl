@@ -14,15 +14,17 @@ J's input : will this work: for ablation study using different encoder for the c
 
 ## Progress updates
 
-📅 21.04.2025 - autoencoders (mae, vae, dae)
+📅 23.04.2025 - weekly: jigsaw puzzle
 
-📅 20.04.2025 - autoencoders (mae, vae, dae)
+📅 21.04.2025 - 
 
-📅 19.04.2025 - autoencoders (mae, vae, dae)
+📅 20.04.2025 - 
 
-📅 18.04.2025 - autoencoders (mae, vae, dae)
+📅 19.04.2025 - 
 
-📅 15.04.2025 - autoencoders + first idea talk
+📅 18.04.2025 - start running experiments in cluster!!!
+
+📅 15.04.2025 - code feedback on weekly meeting + first idea talk
 
 📅 14.04.2025 - weekly meeting 
 
@@ -50,14 +52,12 @@ J's input : will this work: for ablation study using different encoder for the c
 
 # Resources to Implement
 
-SimMIM (Hard): https://github.com/microsoft/SimMIM/tree/main
+Context Encoder: https://github.com/fbuchert/context-encoder-pytorch 
 
-or Context Autoencoder: https://github.com/lxtGH/CAE
+Denoising Autoencoder : https://github.com/YeonwooSung/SelfSupervisedLearning_PyTorch/tree/master/AutoEncoder/DenoisingAutoEncoder
 
-Denoising Autoencoder (Easy): https://github.com/YeonwooSung/SelfSupervisedLearning_PyTorch/tree/master/AutoEncoder/DenoisingAutoEncoder
-
-Variational Autoencoder: https://github.com/AntixK/PyTorch-VAE/tree/master 
-
-Variational Autoencoder WITH EXPLANATIONS: https://hunterheidenreich.com/posts/modern-variational-autoencoder-in-pytorch/
+Variational Autoencoder: https://github.com/AntixK/PyTorch-VAE/tree/master , 
+https://hunterheidenreich.com/posts/modern-variational-autoencoder-in-pytorch/ ,
+ https://github.com/sksq96/pytorch-vae/blob/master/vae-cnn.ipynb
 
 

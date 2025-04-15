@@ -18,11 +18,11 @@ ssl_method : simclr
 
 models : supervised learning , self-supervised learning, combined learning (supervised + ssl)
 
-SSL methods : SimCLR✅, Jigsaw Puzzle🚧, SimSiam🚧, VAE📝, DAE📝, MAE📝
+SSL methods : SimCLR✅, Jigsaw Puzzle🚧, SimSiam🚧, VICReg🚧
 
-encoders : VGG✅, Resnet-18✅, Resnet-50✅ and ViT-B🚧
+encoders : VGG✅, Resnet-18✅, Resnet-50✅, Resner-101✅, and ViT-B🚧
 
-datasets :  debug (10% CIFAR-10)✅, CIFAR-10🚧, CIFAR-100🚧, ImageNet🚧 and Caltech-101🚧
+datasets :  debug (10% CIFAR-10)✅, CIFAR-10✅, CIFAR-100🚧, ImageNet🚧 and Caltech-101🚧
 
 📝 Planned --> ⏳ Ongoing --> 🚧 Done but unchecked (internal) --> ✅ Done and checked (internal) --> 💯 Approved (external)
 

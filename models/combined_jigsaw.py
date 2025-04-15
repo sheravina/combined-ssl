@@ -43,7 +43,9 @@ class CombinedJigsaw(BaseModel):
             x_list.append(z)
         
         # Concatenate features from all tiles
-        x = torch.cat(x_list, 1)
+        x_jig = torch.cat(x_list, 1)
+
+        x_sup = self.encoder(x)
         
         # Process aggregated features
         x = self.fc7(x.view(B, -1))

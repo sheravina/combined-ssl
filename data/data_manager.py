@@ -37,7 +37,7 @@ class DataManager:
           
 
         if self.ssl_method == SSL_SIMCLR or self.ssl_method == SSL_SIMSIAM or self.ssl_method == SSL_VICREG:
-            self.transformation_test = base_transformation  
+            self.transformation_test = basenorm_transformation  
             self.transformation_contrastive = SimCLRTransformations(n_views=2,include_original=True)
         elif self.ssl_method == SSL_JIGSAW:
             self.transformation_test = JigsawTransformations(num_permutations= 1000)
@@ -48,7 +48,7 @@ class DataManager:
     def prepare_dataset(self):
         # train dataset for supervised model (transform to tensor + normalization)
         # contrastive dataset for unsupervised model and combined model (transform based on ssl method)
-        # test dataset for test (transform to tensor only)
+        # test dataset for test (transform to tensor only) -> does not work, so it has to be tensor + normalization
 
         if self.dataset_name == DEBUG_DATASET:
             self.train_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_train)
@@ -80,8 +80,10 @@ class DataManager:
         
 
     def create_loader(self):
+        # train_indices, test_indices, val_indices, sampled_indices = [], [], [], [] # i was sanity-checking indices
         if self.dataset_name == DEBUG_DATASET:
             
+            # Collect all labels from the training dataset
             all_labels = []
             for i in range(len(self.train_dataset)):
                 img, label = self.train_dataset[i]
@@ -89,9 +91,9 @@ class DataManager:
 
             # Convert to numpy array for easier handling
             all_labels = np.array(all_labels)
-
-            # Take a stratified 10% sample first
             all_indices = np.arange(len(all_labels))
+
+            # Take a stratified 10% sample first (if this is really needed)
             sampled_indices, _ = train_test_split(
                 all_indices,
                 test_size=0.9,  # Keep only 10% of the data
@@ -102,29 +104,65 @@ class DataManager:
             # Get labels for the sampled subset
             sampled_labels = all_labels[sampled_indices]
 
-            # Now split the 10% sample into train, val, test sets
-            # First split: 60% train, 40% test
-            train_indices, test_indices = train_test_split(
-                np.arange(len(sampled_indices)),
-                test_size=0.4,
+            # Split the 10% sample into train (60%), val (20%), test (20%)
+            # First split: 60% train, 40% temp
+            test_indices, temp_indices = train_test_split(
+                sampled_indices,
+                test_size=0.6,  # 40% for temporary set
                 random_state=42,
                 stratify=sampled_labels
             )
+            
+            # Get labels for the temp subset
+            temp_labels = all_labels[temp_indices]
+            
+            # Second split: 20% validation, 20% test (from the 40% temp)
+            train_indices, val_indices = train_test_split(
+                temp_indices,
+                test_size=0.1,  # Split temp 50-50 for val and test
+                random_state=42,
+                stratify=temp_labels
+            )
 
-            # Convert relative indices to absolute indices
-            train_indices = [sampled_indices[i] for i in train_indices]
-            test_indices = [sampled_indices[i] for i in test_indices]
-
+            # Create samplers with the generator
             train_sampler = SubsetRandomSampler(train_indices, generator=self.generator)
+            val_sampler = SubsetRandomSampler(val_indices, generator=self.generator)
             test_sampler = SubsetRandomSampler(test_indices, generator=self.generator)
-
+            
+            # Create the data loaders
             train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=train_sampler)
+            val_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=val_sampler)
             cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
-            test_loader= DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=test_sampler)
+            
+            # Note: Using self.test_dataset here with indices from train_dataset 
+            # only works if they have the same structure and ordering
+            test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=test_sampler)
 
         elif self.dataset_name == CIFAR10_DATASET or CIFAR100_DATASET or IMAGENET_DATASET:
-            train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, shuffle=True, generator=self.generator)
-            cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, shuffle=True, generator=self.generator)
+            all_labels = []
+            for i in range(len(self.train_dataset)):
+                img, label = self.train_dataset[i]
+                all_labels.append(label)
+
+            # Convert to numpy array for easier handling
+            all_labels = np.array(all_labels)
+
+            # Take a stratified 10% sample first
+            all_indices = np.arange(len(all_labels))
+            train_indices, val_indices = train_test_split(
+                all_indices,
+                test_size=0.1,
+                random_state=42,
+                stratify=all_labels
+            )
+
+            # Create samplers with the generator
+            val_sampler = SubsetRandomSampler(val_indices, generator=self.generator)
+            train_sampler = SubsetRandomSampler(train_indices, generator=self.generator)
+
+            train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=train_sampler)
+            val_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=val_sampler)
+            cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
             test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)
 
         elif self.dataset_name == CALTECH101_DATASET:
@@ -138,24 +176,76 @@ class DataManager:
 
             # Take a stratified 10% sample first
             all_indices = np.arange(len(all_labels))
-            train_indices, test_indices = train_test_split(
+            test_indices, temp_indices = train_test_split(
                 all_indices,
-                test_size=0.4,  # Keep only 10% of the data
+                test_size=0.6,  # 40% for temporary set
                 random_state=42,
                 stratify=all_labels
+            )
+            
+            # Get labels for the temp subset
+            temp_labels = all_labels[temp_indices]
+            
+            # Second split: 20% validation, 20% test (from the 40% temp)
+            train_indices, val_indices = train_test_split(
+                temp_indices,
+                test_size=0.1,  # Split temp 50-50 for val and test
+                random_state=42,
+                stratify=temp_labels
             )
 
             train_sampler = SubsetRandomSampler(train_indices, generator=self.generator)
             test_sampler = SubsetRandomSampler(test_indices, generator=self.generator)
+            val_sampler = SubsetRandomSampler(val_indices, generator=self.generator)
 
             train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=train_sampler)
             cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
             test_loader= DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=test_sampler)
+            val_loader= DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=val_sampler)
 
         else:
             raise NotImplementedError("create_loader() for this dataset has not been implemented yet")
-
         
-        return train_loader, cont_loader, test_loader
+        # np.set_printoptions(threshold=10000, linewidth=200, edgeitems=10)
+
+        # # Print lengths of each split
+        # print(f"Train indices length: {len(train_indices)}")
+        # print(f"Validation indices length: {len(val_indices)}")
+        # print(f"Test indices length: {len(test_indices)}")
+
+        # # Print actual indices (first 10 of each)
+        # print("\nFirst 10 train indices:", train_indices)
+        # print("\nFirst 10 validation indices:", val_indices)
+        # print("\nFirst 10 test indices:", test_indices)
+
+        # train_indices = list(train_indices)
+        # val_indices = list(val_indices)
+        # test_indices = list(test_indices)
+        
+        # # Verify no repeating indices
+        # train_set = set(train_indices)
+        # val_set = set(val_indices)
+        # test_set = set(test_indices)
+        
+        # # Check and fix any overlaps (though train_test_split should prevent this)
+        # train_val_overlap = train_set.intersection(val_set)
+        # train_test_overlap = train_set.intersection(test_set)
+        # val_test_overlap = val_set.intersection(test_set)
+        
+        # for idx in train_val_overlap:
+        #     val_indices.remove(idx)
+        
+        # for idx in train_test_overlap:
+        #     test_indices.remove(idx)
+            
+        # for idx in val_test_overlap:
+        #     test_indices.remove(idx)
+            
+        # # Print verification messages
+        # print(f"Final split sizes - Train: {len(train_indices)}, Val: {len(val_indices)}, Test: {len(test_indices)}")
+        # print(f"Total indices: {len(train_indices) + len(val_indices) + len(test_indices)}")
+        # print(f"Original sampled size: {len(sampled_indices)}")
+        
+        return train_loader, cont_loader, test_loader, val_loader
 
 

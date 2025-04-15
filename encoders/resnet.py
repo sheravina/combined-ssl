@@ -1,4 +1,4 @@
-from torchvision.models import resnet18, resnet50
+from torchvision.models import resnet18, resnet50, resnet101
 import torch.nn as nn
 from encoders.base_encoder import BaseEncoder
 from utils.constants import *
@@ -14,6 +14,8 @@ class ResNetEncoder(BaseEncoder):
             model = resnet18(weights=None, zero_init_residual=zero_init_residual)
         elif model_type == ENC_RESNET50:
             model = resnet50(weights=None, zero_init_residual=zero_init_residual)
+        elif model_type == ENC_RESNET101:
+            model = resnet101(weights=None, zero_init_residual=zero_init_residual)
         else:
             raise ValueError(f"Unsupported model type: {model_type}")
 

@@ -13,6 +13,7 @@ class CombinedSimCLRTrainer(BaseTrainer):
         model,
         train_loader,
         test_loader,
+        val_loader,
         ft_loader,
         optimizer,
         epochs,
@@ -30,7 +31,7 @@ class CombinedSimCLRTrainer(BaseTrainer):
             temperature: Temperature parameter for contrastive loss
             alpha: Weight for supervised loss
         """
-        super().__init__(model, train_loader, test_loader, ft_loader, optimizer, epochs)
+        super().__init__(model, train_loader, test_loader, val_loader, ft_loader, optimizer, epochs)
         self.temperature = temperature
         self.alpha = alpha
         self.criterion = SupervisedLoss()
@@ -43,7 +44,7 @@ class CombinedSimCLRTrainer(BaseTrainer):
             train_loss
         """
         self.model.train()
-        train_loss = 0
+        train_loss, train_acc = 0, 0
 
         for batch, (images, labels) in enumerate(self.train_loader):
             #images, labels = images.to(self.device), labels.to(self.device)
@@ -65,14 +66,19 @@ class CombinedSimCLRTrainer(BaseTrainer):
             loss = contrastive_loss + self.alpha * supervised_loss
             train_loss += loss.item()
 
+            pred_labels = pred.argmax(dim=1)
+            train_acc += ((pred_labels == labels).sum().item()/len(pred_labels))
+            
+
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
         
         train_loss = train_loss / len(self.train_loader)
-        return train_loss
+        train_acc = train_acc / len(self.test_loader)
+        return train_loss, train_acc
     
-    def test_step(self):
+    def test_step(self, dataloader):
         """
         Tests the model for a single epoch
 
@@ -82,7 +88,7 @@ class CombinedSimCLRTrainer(BaseTrainer):
         self.model.eval()
         test_loss, test_acc = 0, 0
         with torch.inference_mode():
-            for batch, (images, labels) in enumerate(self.test_loader):
+            for batch, (images, labels) in enumerate(dataloader):
                 images, labels = images.to(self.device), labels.to(self.device)
                 test_pred, _ = self.model(images)
                 loss = self.criterion(test_pred, labels)
@@ -102,22 +108,25 @@ class CombinedSimCLRTrainer(BaseTrainer):
         Returns:
             results: Dictionary containing lists of training losses, test losses, and test accuracies
         """
-        results = {"train_loss": [], "test_loss": [], "test_acc": []}
+        results = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": [], "eval_loss": [], "eval_acc": []}
         
         for epoch in range(self.epochs):
             # Train for one epoch
-            train_loss = self.train_step()
+            train_loss, train_acc = self.train_step()
             # Evaluate on test set
-            test_loss, test_acc = self.test_step()
+            val_loss, val_acc = self.test_step(self.val_loader)
+            # Evaluate on test set
+            eval_loss, eval_acc = self.test_step(self.test_loader)
             
             # Store results
             results["train_loss"].append(train_loss)
-            results["test_loss"].append(test_loss)
-            results["test_acc"].append(test_acc)
+            results["train_acc"].append(train_loss)
+            results["val_loss"].append(val_loss)
+            results["val_acc"].append(val_acc)
+            results["eval_loss"].append(eval_loss)
+            results["eval_acc"].append(eval_acc)
             
             # Print progress
-            print(f"Epoch {epoch+1}/{self.epochs}, Train Loss: {train_loss:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
+            print(f"Epoch {epoch+1}/{self.epochs}, Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, Test Loss: {eval_loss:.4f}, Test Acc: {eval_acc:.4f}")
         
         return results
-    
-    # results folder and timestamp it

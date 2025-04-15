@@ -12,6 +12,7 @@ from trainers import *
 from torchinfo import summary
 import time
 from datetime import datetime,timedelta
+from .lars import LARS
 
 class NNTrain:
     def __init__(self, dataset_name: str, ssl_method: str, encoder_name: str, model_name:str, save_toggle:bool) -> None:
@@ -22,11 +23,24 @@ class NNTrain:
         self.save_toggle = save_toggle
 
         # still hard coded!
-        self.batch_size = 32 
-        self.epochs = 5 
-        self.learning_rate = 1e-4
-        self.weight_decay = 1e-4
+        self.optimizer_name = OPT_SGD
+        self.batch_size = 128
+        self.epochs_pt = 2
+        self.epochs_ft = 3
+        self.epochs = self.epochs_pt + self.epochs_ft
+        self.learning_rate = 0.01
+        self.weight_decay = 5e-4
         self.seed = 42
+
+        # Create run directory with timestamp for this training session
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.results_dir = f"results/{self.dataset_name}_{self.encoder_name}_{self.model_name}_{self.ssl_method}_{timestamp}"
+        self.checkpoint_dir = f"{self.results_dir}/checkpoints"
+        
+        # Create the directories if they don't exist
+        if self.save_toggle:
+            os.makedirs(self.results_dir, exist_ok=True)
+            os.makedirs(self.checkpoint_dir, exist_ok=True)
 
         self.start_time = time.time()
 
@@ -39,15 +53,17 @@ class NNTrain:
         self.training_time = self.end_time - self.start_time
         self.training_time_formatted = str(timedelta(seconds=self.training_time))
 
-        self.save_results_to_excel()
+        if self.save_toggle:
+            self.save_results_to_excel()
 
     def load_data(self):
         # check dataset name
         dm = DataManager(dataset_name=self.dataset_name, ssl_method=self.ssl_method, batch_size=self.batch_size, seed=self.seed)
-        train_loader, cont_loader, test_loader = dm.create_loader()
+        train_loader, cont_loader, test_loader, val_loader = dm.create_loader()
         self.train_loader = train_loader
         self.cont_loader = cont_loader
         self.test_loader = test_loader
+        self.val_loader = val_loader
 
     def data_char(self):
         # Grab data characteristics
@@ -63,75 +79,77 @@ class NNTrain:
         if self.encoder_name == ENC_VGG:
             self.encoder = VGGEncoder()
 
-        elif self.encoder_name == ENC_RESNET18: 
-            self.encoder = ResNetEncoder(model_type=ENC_RESNET18)
-        
-        elif self.encoder_name == ENC_RESNET50:
-            self.encoder = ResNetEncoder(model_type=ENC_RESNET50)
+        elif self.encoder_name == ENC_RESNET18 or self.encoder_name == ENC_RESNET50 or self.encoder_name == ENC_RESNET101: 
+            self.encoder = ResNetEncoder(model_type=self.encoder_name)
 
         elif self.encoder_name == ENC_VIT:
             self.encoder = ViTEncoder()
     
     def init_model_trainer(self):
+
         if self.model_name == MOD_SUPERVISED:
             self.model = SupervisedModel(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
-            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = SupervisedTrainer(model=self.model, train_loader=self.train_loader, test_loader=self.test_loader, ft_loader=None, optimizer=self.optimizer, epochs=self.epochs)
-            
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMCLR:
             self.model = SimCLR(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
-            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = SimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
-        
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMCLR:
             self.model = CombinedSimCLR(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)
-            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = CombinedSimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=None, optimizer=self.optimizer, epochs=self.epochs)
-
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_JIGSAW:
-            self.model = Jigsaw(base_encoder=self.encoder, input_shape = self.input_shape_jigsaw, ft_input_shape=self.input_shape, output_shape = self.output_shape)
-            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = JigsawTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
-        
+            self.model = Jigsaw(base_encoder=self.encoder, input_shape = self.input_shape_jigsaw, ft_input_shape=self.input_shape, output_shape = self.output_shape)        
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_JIGSAW:
             self.model = CombinedJigsaw(base_encoder=self.encoder, input_shape = self.input_shape_jigsaw, ft_input_shape=self.input_shape, output_shape = self.output_shape)
-            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = CombinedJigsawTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
-
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMSIAM:
             self.model = SimSiam(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
-            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = SimSiamTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
-
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMSIAM:
-            self.model = CombinedSimSiam(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)
-            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = CombinedSimSiamTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=None, optimizer=self.optimizer, epochs=self.epochs)
-    
+            self.model = CombinedSimSiam(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)        
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_VICREG:
             self.model = VICReg(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
-            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = VICRegTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=self.train_loader, optimizer=self.optimizer, epochs=self.epochs)
-
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_VICREG:
-            self.model = CombinedVICReg(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)
-            self.optimizer = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
-            self.trainer = CombinedVICRegTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, ft_loader=None, optimizer=self.optimizer, epochs=self.epochs)
+            self.model = CombinedVICReg(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)        
+
+        if self.optimizer_name == OPT_ADAM:
+            self.optimizer_selected = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
+        elif self.optimizer_name == OPT_LARS:
+            self.optimizer_selected = LARS(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay, momentum=0.9)
+        elif self.optimizer_name == OPT_SGD:
+            self.optimizer_selected = optim.SGD(self.model.parameters(),lr=self.learning_rate,momentum=0.9, weight_decay=self.weight_decay, nesterov=False)
+
+
+        self.lr_scheduler_selected = optim.lr_scheduler.CosineAnnealingLR(optimizer=self.optimizer_selected,T_max=self.epochs, eta_min = 0) #0.001
+        # self.lr_scheduler_selected = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=self.optimizer_selected,mode='min',verbose=True,factor=0.3,patience=3,threshold=0.09)
+
+
+        if self.model_name == MOD_SUPERVISED:
+            self.trainer = SupervisedTrainer(model=self.model, train_loader=self.train_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None, optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+        elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMCLR:
+            self.trainer = SimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+        elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMCLR:
+            self.trainer = CombinedSimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+        elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_JIGSAW:
+            self.trainer = JigsawTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)      
+        elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_JIGSAW:
+            self.trainer = CombinedJigsawTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+        elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMSIAM:
+            self.trainer = SimSiamTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+        elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMSIAM:
+            self.trainer = CombinedSimSiamTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+        elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_VICREG:
+            self.trainer = VICRegTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+        elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_VICREG:
+            self.trainer = CombinedVICRegTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
     
         self.results = self.trainer.train()
 
     def save_results_to_excel(self):
-
-        results_dir = 'results'
-        os.makedirs(results_dir, exist_ok=True)
-
         # Create a dictionary with parameters for the first sheet
         params_data = {
             'dataset_name': self.dataset_name,
             'ssl_method': self.ssl_method,
             'encoder_name': self.encoder_name,
             'model_name': self.model_name,
+            'optimizer' : self.optimizer_name,
             'batch_size': self.batch_size,
+            'epochs_pt' : self.epochs_pt,
+            'epochs_ft' : self.epochs_ft,
             'epochs': self.epochs,
             'learning_rate': self.learning_rate,
             'weight_decay': self.weight_decay,
@@ -162,20 +180,17 @@ class NNTrain:
                     
                     results_rows.append(row_data)
 
-        if self.save_toggle == True:
-            # Create a DataFrame for results
-            results_df = pd.DataFrame(results_rows)
-            
-            # Generate a timestamp for the filename
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{results_dir}/{self.dataset_name}_{self.encoder_name}_{self.model_name}_{self.ssl_method}_{timestamp}.xlsx"
-            
-            # Create a Pandas Excel writer using XlsxWriter as the engine
-            with pd.ExcelWriter(filename, engine='openpyxl') as writer:
-                # Write each dataframe to a different worksheet
-                params_df.to_excel(writer, sheet_name='Parameters', index=False)
-                results_df.to_excel(writer, sheet_name='Results', index=False)
-            
-            print(f"Results saved to {filename}")
-        else:
-            print(f"save_toggle is OFF")
+        # Create a DataFrame for results
+        results_df = pd.DataFrame(results_rows)
+        
+        # Define Excel file path in the same directory as checkpoints
+        excel_path = f"{self.results_dir}/training_results.xlsx"
+        
+        # Create a Pandas Excel writer using XlsxWriter as the engine
+        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
+            # Write each dataframe to a different worksheet
+            params_df.to_excel(writer, sheet_name='Parameters', index=False)
+            results_df.to_excel(writer, sheet_name='Results', index=False)
+        
+        # print(f"Results saved to {excel_path}")
+        # print(f"Model checkpoints saved to {self.checkpoint_dir}")

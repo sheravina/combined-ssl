@@ -24,8 +24,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--ssl",
+        default="simclr",
         type=str,
-        help="select a ssl method (simclr, moco, simsiam, jigsaw, vae, simmim)",
+        help="select a ssl method (simclr, simsiam, jigsaw, vicreg)",
     )  # ignored if model is supervised
 
     args = parser.parse_args()
@@ -36,5 +37,5 @@ if __name__ == "__main__":
         ssl_method=args.ssl,
         encoder_name=args.encoder,
         model_name=args.model,
-        save_toggle=False
+        save_toggle=True
     )

@@ -12,7 +12,7 @@ from trainers import SupervisedTrainer
 class SimCLRTrainer(BaseTrainer):
     """Trainer for self-supervised contrastive learning (SimCLR)."""
 
-    def __init__(self, model, train_loader, test_loader, ft_loader, optimizer, epochs, temperature=0.5):
+    def __init__(self, model, train_loader, test_loader, val_loader, ft_loader, optimizer, epochs, temperature=0.5):
         """
         Initialize the SimCLR trainer.
 
@@ -23,7 +23,7 @@ class SimCLRTrainer(BaseTrainer):
             device: Device to run training on ('cuda' or 'cpu')
             temperature: Temperature parameter for contrastive loss
         """
-        super().__init__(model, train_loader, test_loader, ft_loader, optimizer, epochs)
+        super().__init__(model, train_loader, test_loader, val_loader, ft_loader, optimizer, epochs)
         self.temperature = temperature
 
     def train_step(self):
@@ -64,6 +64,7 @@ class SimCLRTrainer(BaseTrainer):
         ft_trainer = SupervisedTrainer(model=ft_model
                                             ,train_loader=self.ft_loader
                                             ,test_loader=self.test_loader
+                                            ,val_loader=self.val_loader
                                             ,ft_loader = None
                                             ,optimizer=ft_optimizer
                                             ,epochs=self.epochs)
