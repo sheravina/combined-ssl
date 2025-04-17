@@ -1,4 +1,5 @@
 from .base_trainer import BaseTrainer
+from .base_combined_trainer import BaseCombinedTrainer
 from .supervised_trainer import SupervisedTrainer
 from .unsupervised_simclr_trainer import SimCLRTrainer
 from .combined_simclr_trainer import CombinedSimCLRTrainer
@@ -11,6 +12,7 @@ from .combined_vicreg_trainer import CombinedVICRegTrainer
 
 __all__ = [
     "BaseTrainer",
+    "BaseCombinedTrainer",
     "SupervisedTrainer",
     "SimCLRTrainer",
     "CombinedSimCLRTrainer",

@@ -25,8 +25,8 @@ class NNTrain:
         # still hard coded!
         self.optimizer_name = OPT_SGD
         self.batch_size = 128
-        self.epochs_pt = 2
-        self.epochs_ft = 3
+        self.epochs_pt = 3
+        self.epochs_ft = 2
         self.epochs = self.epochs_pt + self.epochs_ft
         self.learning_rate = 0.01
         self.weight_decay = 5e-4
@@ -59,11 +59,12 @@ class NNTrain:
     def load_data(self):
         # check dataset name
         dm = DataManager(dataset_name=self.dataset_name, ssl_method=self.ssl_method, batch_size=self.batch_size, seed=self.seed)
-        train_loader, cont_loader, test_loader, val_loader = dm.create_loader()
+        train_loader, cont_loader, test_loader, val_loader, valcont_loader = dm.create_loader()
         self.train_loader = train_loader
         self.cont_loader = cont_loader
         self.test_loader = test_loader
         self.val_loader = val_loader
+        self.valcont_loader = valcont_loader
 
     def data_char(self):
         # Grab data characteristics
@@ -89,27 +90,39 @@ class NNTrain:
 
         if self.model_name == MOD_SUPERVISED:
             self.model = SupervisedModel(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
+
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMCLR:
             self.model = SimCLR(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
+
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMCLR:
             self.model = CombinedSimCLR(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)
+
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_JIGSAW:
             self.model = Jigsaw(base_encoder=self.encoder, input_shape = self.input_shape_jigsaw, ft_input_shape=self.input_shape, output_shape = self.output_shape)        
+
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_JIGSAW:
             self.model = CombinedJigsaw(base_encoder=self.encoder, input_shape = self.input_shape_jigsaw, ft_input_shape=self.input_shape, output_shape = self.output_shape)
+
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMSIAM:
             self.model = SimSiam(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
+
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMSIAM:
-            self.model = CombinedSimSiam(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)        
+            self.model = CombinedSimSiam(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)       
+
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_VICREG:
             self.model = VICReg(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
+
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_VICREG:
-            self.model = CombinedVICReg(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)        
+            self.model = CombinedVICReg(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape) 
+
+
 
         if self.optimizer_name == OPT_ADAM:
             self.optimizer_selected = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
+
         elif self.optimizer_name == OPT_LARS:
             self.optimizer_selected = LARS(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay, momentum=0.9)
+
         elif self.optimizer_name == OPT_SGD:
             self.optimizer_selected = optim.SGD(self.model.parameters(),lr=self.learning_rate,momentum=0.9, weight_decay=self.weight_decay, nesterov=False)
 
@@ -119,23 +132,67 @@ class NNTrain:
 
 
         if self.model_name == MOD_SUPERVISED:
-            self.trainer = SupervisedTrainer(model=self.model, train_loader=self.train_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None, optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+            self.trainer = SupervisedTrainer(model=self.model
+                                            , train_loader=self.train_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None
+                                            , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                            , epochs=self.epochs
+                                            , save_dir=self.checkpoint_dir if self.save_toggle else None)
+            
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMCLR:
-            self.trainer = SimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+            self.trainer = SimCLRTrainer(model=self.model
+                                         , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, valcont_loader = self.valcont_loader
+                                         , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                         , epochs=self.epochs, epochs_pt = self.epochs_pt, epochs_ft = self.epochs_ft
+                                         , save_dir=self.checkpoint_dir if self.save_toggle else None)
+            
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMCLR:
-            self.trainer = CombinedSimCLRTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+            self.trainer = CombinedSimCLRTrainer(model=self.model
+                                                 , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None
+                                                 , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                                 , epochs=self.epochs
+                                                 , save_dir=self.checkpoint_dir if self.save_toggle else None)
+            
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_JIGSAW:
-            self.trainer = JigsawTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)      
+            self.trainer = JigsawTrainer(model=self.model
+                                         , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, valcont_loader = self.valcont_loader
+                                         , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                         , epochs=self.epochs, epochs_pt = self.epochs_pt, epochs_ft = self.epochs_ft
+                                         , save_dir=self.checkpoint_dir if self.save_toggle else None)      
+            
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_JIGSAW:
-            self.trainer = CombinedJigsawTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+            self.trainer = CombinedJigsawTrainer(model=self.model
+                                                 , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader
+                                                 , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                                 , epochs=self.epochs
+                                                 , save_dir=self.checkpoint_dir if self.save_toggle else None)
+            
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMSIAM:
-            self.trainer = SimSiamTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+            self.trainer = SimSiamTrainer(model=self.model
+                                          , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, valcont_loader = self.valcont_loader
+                                          , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                          , epochs=self.epochs, epochs_pt = self.epochs_pt, epochs_ft = self.epochs_ft
+                                          , save_dir=self.checkpoint_dir if self.save_toggle else None)
+            
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMSIAM:
-            self.trainer = CombinedSimSiamTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+            self.trainer = CombinedSimSiamTrainer(model=self.model
+                                                  , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None
+                                                  , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                                  , epochs=self.epochs
+                                                  , save_dir=self.checkpoint_dir if self.save_toggle else None)
+            
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_VICREG:
-            self.trainer = VICRegTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+            self.trainer = VICRegTrainer(model=self.model
+                                         , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, valcont_loader = self.valcont_loader
+                                         , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                         , epochs=self.epochs, epochs_pt = self.epochs_pt, epochs_ft = self.epochs_ft
+                                         , save_dir=self.checkpoint_dir if self.save_toggle else None)
+            
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_VICREG:
-            self.trainer = CombinedVICRegTrainer(model=self.model, train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None, optimizer=self.optimizer_selected, epochs=self.epochs, save_dir=self.checkpoint_dir if self.save_toggle else None)
+            self.trainer = CombinedVICRegTrainer(model=self.model
+                                                 , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None
+                                                 , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                                 , epochs=self.epochs
+                                                 , save_dir=self.checkpoint_dir if self.save_toggle else None)
     
         self.results = self.trainer.train()
 

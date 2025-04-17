@@ -131,8 +131,9 @@ class DataManager:
             
             # Create the data loaders
             train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=train_sampler)
-            val_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=val_sampler)
+            val_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=val_sampler)
             cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
+            valcont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=val_sampler)
             
             # Note: Using self.test_dataset here with indices from train_dataset 
             # only works if they have the same structure and ordering
@@ -164,6 +165,7 @@ class DataManager:
             val_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=val_sampler)
             cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
             test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)
+            valcont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=val_sampler)
 
         elif self.dataset_name == CALTECH101_DATASET:
             all_labels = []
@@ -202,6 +204,7 @@ class DataManager:
             cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
             test_loader= DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=test_sampler)
             val_loader= DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=val_sampler)
+            valcont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=val_sampler)
 
         else:
             raise NotImplementedError("create_loader() for this dataset has not been implemented yet")
@@ -246,6 +249,6 @@ class DataManager:
         # print(f"Total indices: {len(train_indices) + len(val_indices) + len(test_indices)}")
         # print(f"Original sampled size: {len(sampled_indices)}")
         
-        return train_loader, cont_loader, test_loader, val_loader
+        return train_loader, cont_loader, test_loader, val_loader, valcont_loader
 
 
