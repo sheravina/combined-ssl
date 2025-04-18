@@ -3,4 +3,5 @@
 *.pyd
 __pycache__/
 data_dir/
-log/*
+log/*.log
+log/*.err
