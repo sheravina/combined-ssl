@@ -129,8 +129,8 @@ class NNTrain:
             self.optimizer_selected = optim.SGD(self.model.parameters(),lr=self.learning_rate,momentum=0.9, weight_decay=self.weight_decay, nesterov=True)
 
 
-        # self.lr_scheduler_selected = optim.lr_scheduler.CosineAnnealingLR(optimizer=self.optimizer_selected,T_max=self.epochs, eta_min = 0) #0.001
-        self.lr_scheduler_selected = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=self.optimizer_selected,mode='max',verbose=True,factor=0.1,patience=3,threshold=0.001)
+        self.lr_scheduler_selected = optim.lr_scheduler.CosineAnnealingLR(optimizer=self.optimizer_selected,T_max=self.epochs, eta_min = 0) #0.001
+        # self.lr_scheduler_selected = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=self.optimizer_selected,mode='max',verbose=True,factor=0.1,patience=3,threshold=0.001)
 
 
         if self.model_name == MOD_SUPERVISED:
