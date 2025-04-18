@@ -1,8 +1,8 @@
 #!/bin/sh
 #SBATCH --mail-user=sheravina@master.ismll.de
 #SBATCH --job-name=debug-run
-#SBATCH --output=py_torch_test%j.log
-#SBATCH --error=py_torch_test%j.err
+#SBATCH --output=./log/py_torch_test%j.log
+#SBATCH --error=./log/py_torch_test%j.err
 #SBATCH --partition=STUD
 #SBATCH --gres=gpu:1
 
