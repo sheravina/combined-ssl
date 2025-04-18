@@ -4,6 +4,8 @@
 #SBATCH --output=./log/py_torch_test%j.log
 #SBATCH --error=./log/py_torch_test%j.err
 #SBATCH --partition=STUD
+#SBATCH --gres=gpu:1
+
 
 
 ./../miniconda3/bin/activate SRP_ENV
