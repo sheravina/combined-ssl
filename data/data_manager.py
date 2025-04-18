@@ -80,7 +80,7 @@ class DataManager:
         
 
     def create_loader(self):
-        # train_indices, test_indices, val_indices, sampled_indices = [], [], [], [] # i was sanity-checking indices
+        # train_indices, test_indices, val_indices, sampled_indices = [], [], [], [] # sanity-checking indices
         if self.dataset_name == DEBUG_DATASET:
             
             # Collect all labels from the training dataset
@@ -104,11 +104,10 @@ class DataManager:
             # Get labels for the sampled subset
             sampled_labels = all_labels[sampled_indices]
 
-            # Split the 10% sample into train (60%), val (20%), test (20%)
-            # First split: 60% train, 40% temp
+            # Split the 10% sample into train (60%), val (20%), test (40%)
             test_indices, temp_indices = train_test_split(
                 sampled_indices,
-                test_size=0.6,  # 40% for temporary set
+                test_size=0.6,  # 60% for temporary set
                 random_state=42,
                 stratify=sampled_labels
             )
@@ -161,11 +160,17 @@ class DataManager:
             val_sampler = SubsetRandomSampler(val_indices, generator=self.generator)
             train_sampler = SubsetRandomSampler(train_indices, generator=self.generator)
 
+            # train_loader and val_loader used for supervised methods, where we get from train dataset with normalize transforms
             train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=train_sampler)
             val_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=val_sampler)
+
+            # cont_loader and valcont_loader used for unsupervised task, where we get from train dataset with contrastive transforms
             cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
-            test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)
             valcont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=val_sampler)
+
+            # test_loader for test_step() methods under supervised or fine-tuning 
+            test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)
+            
 
         elif self.dataset_name == CALTECH101_DATASET:
             all_labels = []
@@ -200,11 +205,19 @@ class DataManager:
             test_sampler = SubsetRandomSampler(test_indices, generator=self.generator)
             val_sampler = SubsetRandomSampler(val_indices, generator=self.generator)
 
+        
+            # train_loader and val_loader used for supervised methods, where we get from train dataset with normalize transforms
             train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=train_sampler)
+            val_loader= DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=val_sampler)
+
+            # cont_loader and valcont_loader used for unsupervised task, where we get from train dataset with contrastive transforms
             cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
-            test_loader= DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=test_sampler)
-            val_loader= DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=val_sampler)
             valcont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=val_sampler)
+
+            # test_loader for test_step() methods under supervised or fine-tuning, where we get from test dataset with normalize transforms          
+            test_loader= DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=test_sampler)
+
+
 
         else:
             raise NotImplementedError("create_loader() for this dataset has not been implemented yet")
