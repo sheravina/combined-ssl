@@ -24,8 +24,6 @@ class CombinedVICRegTrainer(BaseCombinedTrainer):
         super().__init__(model, train_loader, test_loader, val_loader, ft_loader, optimizer, lr_scheduler, epochs, save_dir)
         self.alpha = alpha
         self.criterion = SupervisedLoss()
-        self.save_dir = save_dir
-        self.best_val_loss = float('inf')
 
     def train_step(self, dataloader):
         """

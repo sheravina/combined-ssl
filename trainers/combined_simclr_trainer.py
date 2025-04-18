@@ -39,8 +39,6 @@ class CombinedSimCLRTrainer(BaseCombinedTrainer):
         self.temperature = temperature
         self.alpha = alpha
         self.criterion = nn.CrossEntropyLoss().to(self.device)
-        self.save_dir = save_dir
-        self.best_val_loss = float('inf')
 
     def train_step(self, dataloader):
         """

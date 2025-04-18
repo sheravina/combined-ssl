@@ -26,8 +26,6 @@ class CombinedSimSiamTrainer(BaseCombinedTrainer):
         self.alpha = alpha
         self.criterion_ssl = torch.nn.CosineSimilarity(dim=1).to(self.device)
         self.criterion_sup = SupervisedLoss()
-        self.save_dir = save_dir
-        self.best_val_loss = float('inf')
 
     def train_step(self, dataloader):
         """

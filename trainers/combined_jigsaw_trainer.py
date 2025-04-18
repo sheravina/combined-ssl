@@ -37,8 +37,6 @@ class CombinedJigsawTrainer(BaseCombinedTrainer):
         self.alpha = alpha
         self.criterion_ssl = torch.nn.CrossEntropyLoss()
         self.criterion = SupervisedLoss()
-        self.save_dir = save_dir
-        self.best_val_loss = float('inf')
 
     def train_step(self, dataloader):
         """

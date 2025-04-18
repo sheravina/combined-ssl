@@ -28,7 +28,9 @@ class BaseCombinedTrainer:
         self.optimizer = optimizer
         self.lr_scheduler = lr_scheduler
         self.epochs = epochs
+        self.best_val_acc = 0
         self.save_dir = save_dir
+        
 
     def save_checkpoint(self, epoch, val_loss, train_loss, val_acc, train_acc):
         """
@@ -89,8 +91,8 @@ class BaseCombinedTrainer:
             results["sup_loss"].append(sup_loss)
 
             # Check if this is the best model so far based on validation loss
-            if val_loss < self.best_val_loss:
-                self.best_val_loss = val_loss
+            if val_acc > self.best_val_acc:
+                self.best_val_acc = val_acc
                 self.save_checkpoint(epoch, val_loss, train_loss, val_acc, train_acc)
 
             # Print progress

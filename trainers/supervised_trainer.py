@@ -24,7 +24,7 @@ class SupervisedTrainer(BaseTrainer):
         super().__init__(model, train_loader, test_loader, val_loader, ft_loader, optimizer, lr_scheduler, epochs)
         self.criterion = nn.CrossEntropyLoss().to(self.device)
         self.save_dir = save_dir
-        self.best_val_loss = float('inf')
+        self.best_val_acc = 0
 
     def train_step(self, dataloader):
         """
@@ -139,8 +139,8 @@ class SupervisedTrainer(BaseTrainer):
             results["eval_acc"].append(eval_acc)
 
             # Check if this is the best model so far based on validation loss
-            if val_loss < self.best_val_loss:
-                self.best_val_loss = val_loss
+            if val_acc > self.best_val_acc:
+                self.best_val_acc = val_acc
                 self.save_checkpoint(epoch, val_loss, train_loss, val_acc, train_acc)
 
             # Print progress
