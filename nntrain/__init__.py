@@ -1,5 +1,6 @@
-from .nntrain import NNTrain
 from .lars import LARS
+from .nntrain import NNTrain
+
 
 __all__ = [
     "NNTrain",

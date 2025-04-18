@@ -15,7 +15,9 @@ from datetime import datetime,timedelta
 from .lars import LARS
 
 class NNTrain:
-    def __init__(self, dataset_name: str, ssl_method: str, encoder_name: str, model_name:str, save_toggle:bool) -> None:
+    def __init__(self
+                 , dataset_name: str, ssl_method: str, encoder_name: str, model_name:str, save_toggle:bool
+                 , optimizer_name, batch_size, epochs_pt, epochs_ft, learning_rate, weight_decay, seed ) -> None:
         self.dataset_name = dataset_name
         self.ssl_method = ssl_method
         self.encoder_name = encoder_name
@@ -23,14 +25,14 @@ class NNTrain:
         self.save_toggle = save_toggle
 
         # still hard coded!
-        self.optimizer_name = OPT_SGD
-        self.batch_size = 128
-        self.epochs_pt = 3
-        self.epochs_ft = 2
+        self.optimizer_name = optimizer_name
+        self.batch_size = batch_size
+        self.epochs_pt = epochs_pt
+        self.epochs_ft = epochs_ft
         self.epochs = self.epochs_pt + self.epochs_ft
-        self.learning_rate = 0.01
-        self.weight_decay = 5e-4
-        self.seed = 42
+        self.learning_rate = learning_rate
+        self.weight_decay = weight_decay
+        self.seed = seed
 
         # Create run directory with timestamp for this training session
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -141,7 +143,7 @@ class NNTrain:
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMCLR:
             self.trainer = SimCLRTrainer(model=self.model
                                          , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, valcont_loader = self.valcont_loader
-                                         , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                         , optimizer=self.optimizer_selected, optimizer_name=self.optimizer_name, lr_scheduler = self.lr_scheduler_selected,lr=self.learning_rate, weight_decay=self.weight_decay
                                          , epochs=self.epochs, epochs_pt = self.epochs_pt, epochs_ft = self.epochs_ft
                                          , save_dir=self.checkpoint_dir if self.save_toggle else None)
             
@@ -155,7 +157,7 @@ class NNTrain:
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_JIGSAW:
             self.trainer = JigsawTrainer(model=self.model
                                          , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, valcont_loader = self.valcont_loader
-                                         , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                         , optimizer=self.optimizer_selected, optimizer_name=self.optimizer_name, lr_scheduler = self.lr_scheduler_selected,lr=self.learning_rate, weight_decay=self.weight_decay
                                          , epochs=self.epochs, epochs_pt = self.epochs_pt, epochs_ft = self.epochs_ft
                                          , save_dir=self.checkpoint_dir if self.save_toggle else None)      
             
@@ -169,7 +171,7 @@ class NNTrain:
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMSIAM:
             self.trainer = SimSiamTrainer(model=self.model
                                           , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, valcont_loader = self.valcont_loader
-                                          , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                          , optimizer=self.optimizer_selected, optimizer_name=self.optimizer_name, lr_scheduler = self.lr_scheduler_selected,lr=self.learning_rate, weight_decay=self.weight_decay
                                           , epochs=self.epochs, epochs_pt = self.epochs_pt, epochs_ft = self.epochs_ft
                                           , save_dir=self.checkpoint_dir if self.save_toggle else None)
             
@@ -183,7 +185,7 @@ class NNTrain:
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_VICREG:
             self.trainer = VICRegTrainer(model=self.model
                                          , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, valcont_loader = self.valcont_loader
-                                         , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                         , optimizer=self.optimizer_selected, optimizer_name=self.optimizer_name, lr_scheduler = self.lr_scheduler_selected,lr=self.learning_rate, weight_decay=self.weight_decay
                                          , epochs=self.epochs, epochs_pt = self.epochs_pt, epochs_ft = self.epochs_ft
                                          , save_dir=self.checkpoint_dir if self.save_toggle else None)
             
