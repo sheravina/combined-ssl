@@ -29,7 +29,52 @@ if __name__ == "__main__":
         help="select a ssl method (simclr, simsiam, jigsaw, vicreg)",
     )  # ignored if model is supervised
 
+    parser.add_argument(
+        "--opt",
+        type=str,
+        help="select an optimizer (sgd, lars, adam)"
+    )
+
+    parser.add_argument(
+        "--bs",
+        type=int,
+        help="batch size"
+    )
+
+    parser.add_argument(
+        "--eppt",
+        type=int,
+        help="number of pretrain epochs, where eppt+epft = total epochs"
+    )
+
+    parser.add_argument(
+        "--epft",
+        type=int,
+        help="number of finetune epochs, where eppt+epft = total epochs"
+    )
+
+    parser.add_argument(
+        "--lr",
+        type=float,
+        help="learning rate"
+    )
+
+    parser.add_argument(
+        "--wd",
+        type=float,
+        help="weight decay, l2 reg"
+    )
+
+    parser.add_argument(
+        "--seed",
+        type=int,
+        help="seed"
+    )
+
+
+
     args = parser.parse_args()
+
 
     # start training neural network!!
     nn = NNTrain(
@@ -37,5 +82,12 @@ if __name__ == "__main__":
         ssl_method=args.ssl,
         encoder_name=args.encoder,
         model_name=args.model,
+        optimizer_name=args.opt, 
+        batch_size=args.bs, 
+        epochs_pt=args.eppt, 
+        epochs_ft=args.epft, 
+        learning_rate=args.lr, 
+        weight_decay=args.wd, 
+        seed=args.seed,
         save_toggle=True
     )
