@@ -114,6 +114,7 @@ class BaseUnsupervisedTrainer:
     def train(self):
         """
         Trains and tests the model for the specified number of epochs.
+        Saves checkpoint only at the end of all SSL training epochs.
 
         Returns:
             results: Dictionary containing lists of training losses, test losses, and test accuracies
@@ -127,10 +128,13 @@ class BaseUnsupervisedTrainer:
             results["ssl_train_loss"].append(ssl_train_loss)
             results["ssl_val_loss"].append(ssl_val_loss)
 
-            if ssl_val_loss < self.best_val_loss:
-                self.best_val_loss = ssl_val_loss
-                self.save_checkpoint(epoch, ssl_train_loss, ssl_val_loss)
             print(f"Epoch {epoch+1}/{self.epochs_pt}, SSL Train Loss: {ssl_train_loss:.4f}, SSL Val Loss: {ssl_val_loss:.4f}")
+        
+        # Save the final model checkpoint after all SSL training epochs
+        final_ssl_train_loss = results["ssl_train_loss"][-1]
+        final_ssl_val_loss = results["ssl_val_loss"][-1]
+        self.save_checkpoint(self.epochs_pt - 1, final_ssl_train_loss, final_ssl_val_loss)
+        print(f"Final SSL model saved after {self.epochs_pt} epochs")
 
         ft_trainer = self.finetune_step()
         ft_results = ft_trainer.train()

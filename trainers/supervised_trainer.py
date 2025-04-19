@@ -132,7 +132,7 @@ class SupervisedTrainer(BaseTrainer):
             
             # Store results
             results["train_loss"].append(train_loss)
-            results["train_acc"].append(train_loss)
+            results["train_acc"].append(train_acc)
             results["val_loss"].append(val_loss)
             results["val_acc"].append(val_acc)
             results["eval_loss"].append(eval_loss)
