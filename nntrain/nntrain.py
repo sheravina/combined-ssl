@@ -35,8 +35,8 @@ class NNTrain:
         self.seed = seed
 
         # Create run directory with timestamp for this training session
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.results_dir = f"results/{self.dataset_name}_{self.encoder_name}_{self.model_name}_{self.ssl_method}_{timestamp}"
+        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.results_dir = f"results/{self.dataset_name}_{self.encoder_name}_{self.model_name}_{self.ssl_method}_{self.batch_size}_{self.seed}_{self.timestamp}"
         self.checkpoint_dir = f"{self.results_dir}/checkpoints"
         
         # Create the directories if they don't exist
@@ -243,7 +243,8 @@ class NNTrain:
         results_df = pd.DataFrame(results_rows)
         
         # Define Excel file path in the same directory as checkpoints
-        excel_path = f"{self.results_dir}/training_results.xlsx"
+        excel_path = f"{self.results_dir}/training_results_{self.dataset_name}_{self.encoder_name}_{self.model_name}_{self.ssl_method}_{self.batch_size}_{self.seed}_{self.timestamp}.xlsx"
+        # self.results_dir = f"results/{self.dataset_name}_{self.encoder_name}_{self.model_name}_{self.ssl_method}_{self.batch_size}_{self.seed}_{self.timestamp}"
         
         # Create a Pandas Excel writer using XlsxWriter as the engine
         with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
