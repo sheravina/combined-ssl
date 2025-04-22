@@ -93,6 +93,9 @@ class NNTrain:
         if self.model_name == MOD_SUPERVISED:
             self.model = SupervisedModel(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
 
+        if self.model_name == MOD_FINETUNED:
+            self.model = SupervisedModel(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
+
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMCLR:
             self.model = SimCLR(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
 
@@ -135,6 +138,13 @@ class NNTrain:
 
         if self.model_name == MOD_SUPERVISED:
             self.trainer = SupervisedTrainer(model=self.model
+                                            , train_loader=self.train_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None
+                                            , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                            , epochs=self.epochs
+                                            , save_dir=self.checkpoint_dir if self.save_toggle else None)
+            
+        if self.model_name == MOD_FINETUNED:
+            self.trainer = FTSupervisedTrainer(model=self.model
                                             , train_loader=self.train_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None
                                             , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
                                             , epochs=self.epochs

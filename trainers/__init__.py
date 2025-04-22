@@ -10,6 +10,7 @@ from .unsupervised_simsiam_trainer import SimSiamTrainer
 from .combined_simsiam_trainer import CombinedSimSiamTrainer
 from .unsupervised_vicreg_trainer import VICRegTrainer
 from .combined_vicreg_trainer import CombinedVICRegTrainer
+from .ft_supervised_trainer import FTSupervisedTrainer
 
 __all__ = [
     "BaseTrainer",
@@ -23,5 +24,6 @@ __all__ = [
     "SimSiamTrainer",
     "CombinedSimSiamTrainer",
     "VICRegTrainer",
-    "CombinedVICRegTrainer"
+    "CombinedVICRegTrainer",
+    "FTSupervisedTrainer"
 ]
