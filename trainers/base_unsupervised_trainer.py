@@ -51,7 +51,7 @@ class BaseUnsupervisedTrainer:
         if os.path.exists(best_model_path):
             checkpoint = torch.load(best_model_path)
             self.model.load_state_dict(checkpoint['model_state_dict'])
-            print(f"Loaded best SSL model from epoch {checkpoint['epoch']+1} for finetuning")
+            print(f"Loaded best SSL model from epoch {checkpoint['epoch']} for finetuning")
         else:
             print("No best model found, using current model for finetuning")
         
@@ -59,16 +59,17 @@ class BaseUnsupervisedTrainer:
         # Only train the classifier layer
 
         if self.optimizer_name == OPT_ADAM:
-            ft_optimizer = optim.Adam(ft_model.classifier_head.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
+            ft_optimizer = optim.Adam(ft_model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
 
         elif self.optimizer_name == OPT_LARS:
-            ft_optimizer = LARS(ft_model.classifier_head.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay, momentum=0.9)
+            ft_optimizer = LARS(ft_model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay, momentum=0.9)
 
         elif self.optimizer_name == OPT_SGD:
-            ft_optimizer = optim.SGD(ft_model.classifier_head.parameters(),lr=self.learning_rate,momentum=0.9, weight_decay=self.weight_decay, nesterov=False)
+            ft_optimizer = optim.SGD(ft_model.parameters(),lr=self.learning_rate,momentum=0.9, weight_decay=self.weight_decay, nesterov=False)
 
         # ft_optimizer = optim.Adam(ft_model.classifier_head.parameters(), lr=1e-4)
 
+        ft_lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer=ft_optimizer,T_max=self.epochs_ft, eta_min = 0)
 
         ft_trainer = SupervisedTrainer(model=ft_model
                                             ,train_loader=self.ft_loader
@@ -76,7 +77,7 @@ class BaseUnsupervisedTrainer:
                                             ,val_loader=self.val_loader
                                             ,ft_loader = None
                                             ,optimizer=ft_optimizer
-                                            ,lr_scheduler=self.lr_scheduler
+                                            ,lr_scheduler=ft_lr_scheduler
                                             ,epochs=self.epochs_ft
                                             ,save_dir=self.save_dir)
         
@@ -133,7 +134,7 @@ class BaseUnsupervisedTrainer:
         # Save the final model checkpoint after all SSL training epochs
         final_ssl_train_loss = results["ssl_train_loss"][-1]
         final_ssl_val_loss = results["ssl_val_loss"][-1]
-        self.save_checkpoint(self.epochs_pt - 1, final_ssl_train_loss, final_ssl_val_loss)
+        self.save_checkpoint(self.epochs_pt, final_ssl_train_loss, final_ssl_val_loss)
         print(f"Final SSL model saved after {self.epochs_pt} epochs")
 
         ft_trainer = self.finetune_step()

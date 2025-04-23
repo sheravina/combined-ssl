@@ -122,7 +122,7 @@ class FTSupervisedTrainer(BaseTrainer):
             results: Dictionary containing lists of training losses, test losses, and test accuracies
         """
         # Load pretrained model
-        pretrained_path = os.path.join('pt_models', 'best_ssl_model_1024_01_44.pth')
+        pretrained_path = os.path.join('pt_models', 'best_ssl_model_debug.pth')
         if os.path.exists(pretrained_path):
             print(f"Loading pretrained model from {pretrained_path}")
             checkpoint = torch.load(pretrained_path, map_location=self.device)

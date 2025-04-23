@@ -23,6 +23,7 @@ ENC_VIT = "vit"
 MOD_SUPERVISED = "supervised"
 MOD_UNSUPERVISED = "unsupervised"
 MOD_COMBINED = "combined"
+MOD_FINETUNED = "finetuned"
 
 # Optimizers
 

@@ -97,7 +97,7 @@ class DataManager:
             sampled_indices, _ = train_test_split(
                 all_indices,
                 test_size=0.9,  # Keep only 10% of the data
-                random_state=42,
+                random_state=self.seed,
                 stratify=all_labels
             )
 
@@ -108,7 +108,7 @@ class DataManager:
             test_indices, temp_indices = train_test_split(
                 sampled_indices,
                 test_size=0.6,  # 60% for temporary set
-                random_state=42,
+                random_state=self.seed,
                 stratify=sampled_labels
             )
             
@@ -119,7 +119,7 @@ class DataManager:
             train_indices, val_indices = train_test_split(
                 temp_indices,
                 test_size=0.1,  # Split temp 50-50 for val and test
-                random_state=42,
+                random_state=self.seed,
                 stratify=temp_labels
             )
 
@@ -152,7 +152,7 @@ class DataManager:
             train_indices, val_indices = train_test_split(
                 all_indices,
                 test_size=0.1,
-                random_state=42,
+                random_state=self.seed,
                 stratify=all_labels
             )
 
@@ -186,7 +186,7 @@ class DataManager:
             test_indices, temp_indices = train_test_split(
                 all_indices,
                 test_size=0.6,  # 40% for temporary set
-                random_state=42,
+                random_state=self.seed,
                 stratify=all_labels
             )
             
@@ -197,7 +197,7 @@ class DataManager:
             train_indices, val_indices = train_test_split(
                 temp_indices,
                 test_size=0.1,  # Split temp 50-50 for val and test
-                random_state=42,
+                random_state=self.seed,
                 stratify=temp_labels
             )
 
