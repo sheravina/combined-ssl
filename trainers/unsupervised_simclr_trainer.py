@@ -36,7 +36,6 @@ class SimCLRTrainer(BaseUnsupervisedTrainer):
 
         for batch, (images, labels) in enumerate(dataloader):
             #images, labels = images.to(self.device), labels.to(self.device)
-            
             # calculate contrastive loss between two augmented images
             img_1, img_2 = images[0].to(self.device), images[1].to(self.device)
             b, c, h, w = images[0].shape
