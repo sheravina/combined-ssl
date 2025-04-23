@@ -83,7 +83,7 @@ class BaseUnsupervisedTrainer:
         
         return ft_trainer
     
-    def save_checkpoint(self, epoch, ssl_train_loss, ssl_val_loss):
+    def save_checkpoint(self, epoch, ssl_train_loss):
         """
         Save model checkpoint - overwrites the previous best model
         
@@ -103,13 +103,12 @@ class BaseUnsupervisedTrainer:
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'scheduler_state_dict': self.lr_scheduler.state_dict(),
-            'ssl_train_loss' : ssl_train_loss,
-            'ssl_val_loss': ssl_val_loss
+            'ssl_train_loss' : ssl_train_loss
         }
             
         torch.save(checkpoint, best_model_path)
         
-        print(f'New best SimCLR model saved to {best_model_path} (Epoch {epoch+1}, SSL Train Loss: {ssl_train_loss:.4f}, SSL Val Loss: {ssl_val_loss:.4f})')
+        print(f'New best SimCLR model saved to {best_model_path} (Epoch {epoch+1}, SSL Train Loss: {ssl_train_loss:.4f})')
 
     
     def train(self):
@@ -124,17 +123,17 @@ class BaseUnsupervisedTrainer:
         
         for epoch in range(self.epochs_pt):
             ssl_train_loss = self.train_step(self.train_loader)
-            ssl_val_loss = self.val_step(self.valcont_loader)
+            # ssl_val_loss = self.val_step(self.valcont_loader)
 
             results["ssl_train_loss"].append(ssl_train_loss)
-            results["ssl_val_loss"].append(ssl_val_loss)
+            # results["ssl_val_loss"].append(ssl_val_loss)
 
-            print(f"Epoch {epoch+1}/{self.epochs_pt}, SSL Train Loss: {ssl_train_loss:.4f}, SSL Val Loss: {ssl_val_loss:.4f}")
+            print(f"Epoch {epoch+1}/{self.epochs_pt}, SSL Train Loss: {ssl_train_loss:.4f}")
         
         # Save the final model checkpoint after all SSL training epochs
         final_ssl_train_loss = results["ssl_train_loss"][-1]
-        final_ssl_val_loss = results["ssl_val_loss"][-1]
-        self.save_checkpoint(self.epochs_pt, final_ssl_train_loss, final_ssl_val_loss)
+        # final_ssl_val_loss = results["ssl_val_loss"][-1]
+        self.save_checkpoint(self.epochs_pt, final_ssl_train_loss)
         print(f"Final SSL model saved after {self.epochs_pt} epochs")
 
         ft_trainer = self.finetune_step()

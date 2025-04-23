@@ -61,26 +61,26 @@ class SimCLRTrainer(BaseUnsupervisedTrainer):
             
         return train_loss
     
-    def val_step(self, dataloader):
+    # def val_step(self, dataloader):
 
-        val_loss = 0
-        self.model.eval()
-        with torch.no_grad():
-            for batch, (images, _) in enumerate(dataloader):
-                # Similar to train_step but without backprop
-                img_1, img_2 = images[0].to(self.device), images[1].to(self.device)
-                b, c, h, w = images[0].shape
-                input_ = torch.cat([img_1.unsqueeze(1), img_2.unsqueeze(1)], dim=1)
-                input_ = input_.view(-1, c, h, w)
-                input_ = input_.cuda(non_blocking=True)
-                output = self.model(input_).view(b, 2, -1)
+    #     val_loss = 0
+    #     self.model.eval()
+    #     with torch.no_grad():
+    #         for batch, (images, _) in enumerate(dataloader):
+    #             # Similar to train_step but without backprop
+    #             img_1, img_2 = images[0].to(self.device), images[1].to(self.device)
+    #             b, c, h, w = images[0].shape
+    #             input_ = torch.cat([img_1.unsqueeze(1), img_2.unsqueeze(1)], dim=1)
+    #             input_ = input_.view(-1, c, h, w)
+    #             input_ = input_.cuda(non_blocking=True)
+    #             output = self.model(input_).view(b, 2, -1)
 
-                loss = simclr_loss(output, self.temperature)
-                val_loss += loss.item()
+    #             loss = simclr_loss(output, self.temperature)
+    #             val_loss += loss.item()
         
-        val_loss = val_loss / len(dataloader)
+    #     val_loss = val_loss / len(dataloader)
 
-        return val_loss
+    #     return val_loss
     
     # def finetune_step(self):
     #     # Load the best model if it exists
