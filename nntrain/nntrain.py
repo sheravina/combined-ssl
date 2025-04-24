@@ -61,7 +61,7 @@ class NNTrain:
 
     def load_data(self):
         # check dataset name
-        dm = DataManager(dataset_name=self.dataset_name, ssl_method=self.ssl_method, batch_size=self.batch_size, seed=self.seed)
+        dm = DataManager(dataset_name=self.dataset_name, ssl_method=self.ssl_method, batch_size=self.batch_size, seed=self.seed, encoder=self.encoder_name)
         train_loader, cont_loader, test_loader, val_loader, valcont_loader = dm.create_loader()
         self.train_loader = train_loader
         self.cont_loader = cont_loader
@@ -96,6 +96,15 @@ class NNTrain:
 
         elif self.encoder_name == ENC_VIT:
             self.encoder = ViTEncoder()
+
+        elif self.encoder_name == ENC_MNETV3:
+            self.encoder = MobileNetV3()
+        
+        elif self.encoder_name == ENC_INET:
+            self.encoder = InceptionNet()
+        
+        elif self.encoder_name == ENC_TINYVIT:
+            self.encoder = TinyViTEncoder(ENC_TINYVIT)
     
     def init_model_trainer(self):
 

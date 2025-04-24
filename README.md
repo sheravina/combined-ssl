@@ -25,7 +25,7 @@ models : supervised learning , self-supervised learning, combined learning (supe
 
 SSL methods : SimCLR✅, Jigsaw Puzzle✅, SimSiam✅, VICReg✅
 
-encoders : Resnet-18✅, Resnet-50✅, Resnet-101✅, MobileNetv3📝, InceptionNet📝 and TinyViT📝
+encoders : Resnet-18✅, Resnet-50✅, Resnet-101✅, MobileNetv3✅, InceptionNet✅, TinyViT21m_224✅ and ViT-B-16✅
 
 datasets :  debug (10% CIFAR-10)✅, CIFAR-10✅, CIFAR-100✅, Caltech-101✅ and TinyImageNet📝
 

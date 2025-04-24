@@ -17,7 +17,10 @@ ENC_VGG = "vgg"
 ENC_RESNET18 = "resnet18"
 ENC_RESNET50 = "resnet50"
 ENC_RESNET101 = "resnet101"
+ENC_MNETV3 = "mnet"
+ENC_INET = "inet"
 ENC_VIT = "vit"
+ENC_TINYVIT = "tinyvit"
 
 # Model Name
 

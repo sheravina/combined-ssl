@@ -3,7 +3,9 @@ from .constants_transformation import (
     base_transformation,
     basenorm_transformation,
     basenorm_jp_transformation,
-    simclr_transformation
+    simclr_transformation,
+    inet_transform,
+    inet_simclr_transform
 )
 
 __all__ = [
@@ -11,5 +13,7 @@ __all__ = [
     "base_transformation",
     "basenorm_transformation",
     "basenorm_jp_transformation",
-    "simclr_transformation"
+    "simclr_transformation",
+    "inet_transform",
+    "inet_simclr_transform"
 ]

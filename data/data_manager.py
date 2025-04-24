@@ -8,7 +8,7 @@ from torch.utils.data import SubsetRandomSampler, DataLoader
 from torchvision import datasets
 from utils.constants import *
 from transformations import SimCLRTransformations
-from transformations import basenorm_transformation, base_transformation
+from transformations import basenorm_transformation, base_transformation, inet_transform, inet_simclr_transform
 
 def rotate_img(img, rot):
     if rot == 0: # 0 degrees rotation
@@ -45,12 +45,13 @@ class DatasetWithRotation(torch.utils.data.Dataset):
         return image, image_rotated, rotation_label, torch.tensor(cls_label).long()
 
 class DataManager:
-    def __init__(self, dataset_name, ssl_method, batch_size, seed):
+    def __init__(self, dataset_name, ssl_method, batch_size, seed, encoder):
  
         self.dataset_name = dataset_name
         self.ssl_method = ssl_method
         self.batch_size = batch_size
         self.seed = seed
+        self.encoder = encoder
 
         # Set seeds for all random number generators
         np.random.seed(self.seed)
@@ -69,17 +70,39 @@ class DataManager:
         self.prepare_dataset() 
 
     def create_contrastive_transform(self):
-        self.transformation_train = basenorm_transformation   
-          
 
-        if self.ssl_method == SSL_SIMCLR or self.ssl_method == SSL_SIMSIAM or self.ssl_method == SSL_VICREG:
-            self.transformation_test = basenorm_transformation  
-            self.transformation_contrastive = SimCLRTransformations(n_views=2,include_original=True)
-        elif self.ssl_method == SSL_ROTATION:  
-            self.transformation_test = basenorm_transformation
-            self.transformation_contrastive = basenorm_transformation
+        if self.encoder == ENC_INET:
+            self.transformation_train = inet_transform
+
+            if self.ssl_method in [SSL_SIMCLR, SSL_SIMSIAM, SSL_VICREG]:
+                self.transformation_test = inet_transform
+                self.transformation_contrastive = SimCLRTransformations(
+                    n_views=2,
+                    include_original=True,
+                    simclr_transform=inet_simclr_transform,
+                    base_transform=inet_transform
+                )
+
+            elif self.ssl_method == SSL_ROTATION:
+                self.transformation_test = inet_transform
+                self.transformation_contrastive = inet_transform
+            else:
+                raise NotImplementedError("transformation not implemented yet")
+
         else:
-            raise NotImplementedError("transformation not implemented yet")
+            self.transformation_train = basenorm_transformation
+
+            if self.ssl_method in [SSL_SIMCLR, SSL_SIMSIAM, SSL_VICREG]:
+                self.transformation_test = basenorm_transformation
+                self.transformation_contrastive = SimCLRTransformations(
+                    n_views=2,
+                    include_original=True
+                )
+            elif self.ssl_method == SSL_ROTATION:
+                self.transformation_test = basenorm_transformation
+                self.transformation_contrastive = basenorm_transformation
+            else:
+                raise NotImplementedError("transformation not implemented yet")
 
     
     

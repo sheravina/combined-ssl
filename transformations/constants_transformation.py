@@ -31,8 +31,17 @@ simclr_transformation = transforms.Compose(
     ]
 )
 
-jigsaw_transformation = transforms.Compose([
-            # transforms.RandomCrop(8),
-            transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
-            transforms.Normalize(norm_mean, norm_std)
-        ])
+inet_transform = transforms.Compose([
+    transforms.Resize((299, 299)),  # 🔥 Required for InceptionV3!
+    *basenorm_transformation.transforms
+])
+
+inet_simclr_transform = transforms.Compose([
+    transforms.Resize((299, 299)),  # 🔥 Required for InceptionV3!
+    transforms.RandomResizedCrop(size=299, scale=(0.2, 1.0)),
+    transforms.RandomHorizontalFlip(p=0.5),
+    transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
+    transforms.RandomGrayscale(p=0.2),
+    transforms.ToTensor(),
+    transforms.Normalize(norm_mean, norm_std),
+])
