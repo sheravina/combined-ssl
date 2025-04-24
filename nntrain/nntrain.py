@@ -17,7 +17,7 @@ from .lars import LARS
 class NNTrain:
     def __init__(self
                  , dataset_name: str, ssl_method: str, encoder_name: str, model_name:str, save_toggle:bool
-                 , optimizer_name, batch_size, epochs_pt, epochs_ft, learning_rate, weight_decay, seed ) -> None:
+                 , optimizer_name, batch_size, epochs_pt, epochs_ft, learning_rate, weight_decay, seed, jname ) -> None:
         self.dataset_name = dataset_name
         self.ssl_method = ssl_method
         self.encoder_name = encoder_name
@@ -33,10 +33,11 @@ class NNTrain:
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self.seed = seed
+        self.jname = jname
 
         # Create run directory with timestamp for this training session
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.results_dir = f"results/{self.dataset_name}_{self.encoder_name}_{self.model_name}_{self.ssl_method}_{self.batch_size}_{self.seed}_{self.timestamp}"
+        self.results_dir = f"results/{self.timestamp}_{self.jname}_{self.dataset_name}_{self.encoder_name}_{self.model_name}_{self.ssl_method}_{self.batch_size}_{self.seed}"
         self.checkpoint_dir = f"{self.results_dir}/checkpoints"
         
         # Create the directories if they don't exist
@@ -119,6 +120,12 @@ class NNTrain:
 
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_VICREG:
             self.model = CombinedVICReg(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape) 
+        
+        elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_ROTATION:
+            self.model = Rotation(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
+
+        # elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_ROTATION:
+        #     self.model = CombinedSimCLR(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)
 
 
 
@@ -205,6 +212,20 @@ class NNTrain:
                                                  , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
                                                  , epochs=self.epochs
                                                  , save_dir=self.checkpoint_dir if self.save_toggle else None)
+            
+        elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_ROTATION:
+            self.trainer = RotTrainer(model=self.model
+                                         , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, valcont_loader = self.valcont_loader
+                                         , optimizer=self.optimizer_selected, optimizer_name=self.optimizer_name, lr_scheduler = self.lr_scheduler_selected,lr=self.learning_rate, weight_decay=self.weight_decay
+                                         , epochs=self.epochs, epochs_pt = self.epochs_pt, epochs_ft = self.epochs_ft
+                                         , save_dir=self.checkpoint_dir if self.save_toggle else None)
+            
+        # elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMCLR:
+        #     self.trainer = CombinedSimCLRTrainer(model=self.model
+        #                                          , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None
+        #                                          , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+        #                                          , epochs=self.epochs
+        #                                          , save_dir=self.checkpoint_dir if self.save_toggle else None)
     
         self.results = self.trainer.train()
 

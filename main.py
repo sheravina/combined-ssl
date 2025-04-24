@@ -71,6 +71,12 @@ if __name__ == "__main__":
         help="seed"
     )
 
+    parser.add_argument(
+        "--jname",
+        type=str,
+        help="cluster's job name, otherwise local"
+    )
+
 
 
     args = parser.parse_args()
@@ -89,5 +95,6 @@ if __name__ == "__main__":
         learning_rate=args.lr, 
         weight_decay=args.wd, 
         seed=args.seed,
+        jname=args.jname,
         save_toggle=True
     )

@@ -96,7 +96,7 @@ class BaseUnsupervisedTrainer:
             ft_train_acc: Finetuning training accuracy (optional)
         """            
         # Use a fixed filename for the best model
-        best_model_path = os.path.join(self.save_dir, 'best_ssl_model.pth')
+        epoch_model_path = os.path.join(self.save_dir, f'ssl_model_epoch_{epoch}.pth')
         
         checkpoint = {
             'epoch': epoch,
@@ -106,9 +106,9 @@ class BaseUnsupervisedTrainer:
             'ssl_train_loss' : ssl_train_loss
         }
             
-        torch.save(checkpoint, best_model_path)
+        torch.save(checkpoint, epoch_model_path)
         
-        print(f'New best SimCLR model saved to {best_model_path} (Epoch {epoch+1}, SSL Train Loss: {ssl_train_loss:.4f})')
+        print(f'New best SimCLR model saved to {epoch_model_path} (Epoch {epoch+1}, SSL Train Loss: {ssl_train_loss:.4f})')
 
     
     def train(self):
@@ -129,6 +129,10 @@ class BaseUnsupervisedTrainer:
             # results["ssl_val_loss"].append(ssl_val_loss)
 
             print(f"Epoch {epoch+1}/{self.epochs_pt}, SSL Train Loss: {ssl_train_loss:.4f}")
+
+            if epoch + 1 == 150:
+                self.save_checkpoint(epoch, ssl_train_loss)
+                print(f"Checkpoint saved at epoch 150, SSL Train Loss: {ssl_train_loss:.4f}")
         
         # Save the final model checkpoint after all SSL training epochs
         final_ssl_train_loss = results["ssl_train_loss"][-1]
