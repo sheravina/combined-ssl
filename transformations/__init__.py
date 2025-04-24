@@ -1,11 +1,9 @@
 from .simclr import SimCLRTransformations
-from .jigsaw_trans import JigsawTransformations
 from .constants_transformation import (
     base_transformation,
     basenorm_transformation,
     basenorm_jp_transformation,
-    simclr_transformation,
-    jigsaw_transformation
+    simclr_transformation
 )
 
 __all__ = [
@@ -13,7 +11,5 @@ __all__ = [
     "base_transformation",
     "basenorm_transformation",
     "basenorm_jp_transformation",
-    "simclr_transformation",
-    "jigsaw_transformation",
-    "JigsawTransformations",
+    "simclr_transformation"
 ]

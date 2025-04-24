@@ -1,12 +1,48 @@
 import numpy as np
 import torch
+import torchvision
+import torchvision.transforms as transforms
 import random
 from sklearn.model_selection import train_test_split
 from torch.utils.data import SubsetRandomSampler, DataLoader
 from torchvision import datasets
 from utils.constants import *
-from transformations import SimCLRTransformations, JigsawTransformations
+from transformations import SimCLRTransformations
 from transformations import basenorm_transformation, base_transformation
+
+def rotate_img(img, rot):
+    if rot == 0: # 0 degrees rotation
+        return img
+    elif rot == 1:
+        return transforms.functional.rotate(img, 90)
+    elif rot == 2:
+        return transforms.functional.rotate(img, 180)
+    elif rot == 3:
+        return transforms.functional.rotate(img, 270)
+    else:
+        raise ValueError('rotation should be 0, 90, 180, or 270 degrees')
+
+
+class DatasetWithRotation(torch.utils.data.Dataset):
+    """Wrapper dataset that adds rotation augmentation to any dataset."""
+    
+    def __init__(self, base_dataset) -> None:
+        self.base_dataset = base_dataset
+    
+    def __len__(self):
+        return len(self.base_dataset)
+        
+    def __getitem__(self, index: int):
+        # Get original image and label
+        image, cls_label = self.base_dataset[index]
+
+        # Randomly select image rotation
+        rotation_label = random.choice([0, 1, 2, 3])
+        image_rotated = rotate_img(image, rotation_label)
+
+        rotation_label = torch.tensor(rotation_label).long()
+        # return image_rotated, rotation_label
+        return image, image_rotated, rotation_label, torch.tensor(cls_label).long()
 
 class DataManager:
     def __init__(self, dataset_name, ssl_method, batch_size, seed):
@@ -39,44 +75,80 @@ class DataManager:
         if self.ssl_method == SSL_SIMCLR or self.ssl_method == SSL_SIMSIAM or self.ssl_method == SSL_VICREG:
             self.transformation_test = basenorm_transformation  
             self.transformation_contrastive = SimCLRTransformations(n_views=2,include_original=True)
-        elif self.ssl_method == SSL_JIGSAW:
-            self.transformation_test = JigsawTransformations(num_permutations= 1000)
-            self.transformation_contrastive = JigsawTransformations(num_permutations= 1000)
+        elif self.ssl_method == SSL_ROTATION:  
+            self.transformation_test = basenorm_transformation
+            self.transformation_contrastive = basenorm_transformation
         else:
             raise NotImplementedError("transformation not implemented yet")
+
+    
     
     def prepare_dataset(self):
         # train dataset for supervised model (transform to tensor + normalization)
         # contrastive dataset for unsupervised model and combined model (transform based on ssl method)
         # test dataset for test (transform to tensor only) -> does not work, so it has to be tensor + normalization
+        if self.ssl_method == SSL_ROTATION:
+            if self.dataset_name == DEBUG_DATASET:
+                self.train_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_train)
+                base_contrastive = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_contrastive)
+                self.contrastive_dataset = DatasetWithRotation(base_contrastive)
+                self.test_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_test)
 
-        if self.dataset_name == DEBUG_DATASET:
-            self.train_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_train)
-            self.contrastive_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_contrastive)
-            self.test_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_test) # with Train=True with test_sampler in the DataLoader()
+            elif self.dataset_name == CIFAR10_DATASET:
+                self.train_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_train)
+                base_contrastive = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_contrastive)
+                self.contrastive_dataset = DatasetWithRotation(base_contrastive)
+                self.test_dataset = datasets.CIFAR10(root='./data_dir', train=False, download=True, transform=self.transformation_test)
 
-        elif self.dataset_name == CIFAR10_DATASET:
-            self.train_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True,transform=self.transformation_train)
-            self.contrastive_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True,transform=self.transformation_contrastive)
-            self.test_dataset = datasets.CIFAR10(root='./data_dir', train=False, download=True, transform=self.transformation_test)
+            elif self.dataset_name == CIFAR100_DATASET:
+                self.train_dataset = datasets.CIFAR100(root='./data_dir', train=True, download=True, transform=self.transformation_train)
+                base_contrastive = datasets.CIFAR100(root='./data_dir', train=True, download=True, transform=self.transformation_contrastive)
+                self.contrastive_dataset = DatasetWithRotation(base_contrastive)
+                self.test_dataset = datasets.CIFAR100(root='./data_dir', train=False, download=True, transform=self.transformation_test)
+                    
+            elif self.dataset_name == IMAGENET_DATASET:
+                self.train_dataset = datasets.ImageNet(root='./data_dir', split='train', download=True, transform=self.transformation_train)
+                base_contrastive = datasets.ImageNet(root='./data_dir', split='train', download=True, transform=self.transformation_contrastive)
+                self.contrastive_dataset = DatasetWithRotation(base_contrastive)
+                self.test_dataset = datasets.ImageNet(root='./data_dir', split='test', download=True, transform=self.transformation_test)
 
-        elif self.dataset_name == CIFAR100_DATASET:
-            self.train_dataset = datasets.CIFAR100(root='./data_dir', train=True, download=True,transform=self.transformation_train)
-            self.contrastive_dataset = datasets.CIFAR100(root='./data_dir', train=True, download=True,transform=self.transformation_contrastive)
-            self.test_dataset = datasets.CIFAR100(root='./data_dir', train=False, download=True, transform=self.transformation_test)
-            
-        elif self.dataset_name == IMAGENET_DATASET:
-            self.train_dataset = datasets.ImageNet(root='./data_dir', split='train', download=True, transform=self.transformation_train)
-            self.contrastive_dataset = datasets.ImageNet(root='./data_dir', split='train', download=True, transform=self.transformation_contrastive)
-            self.test_dataset = datasets.ImageNet(root='./data_dir', split='test', download=True, transform=self.transformation_test)
+            elif self.dataset_name == CALTECH101_DATASET: # dataset has no embedded train and test splits
+                self.train_dataset = datasets.Caltech101(root='./data_dir', target_type='category', download=True, transform=self.transformation_train)
+                base_contrastive = datasets.Caltech101(root='./data_dir', target_type='category', download=True, transform=self.transformation_contrastive)
+                self.contrastive_dataset = DatasetWithRotation(base_contrastive)
+                self.test_dataset = datasets.Caltech101(root='./data_dir', target_type='category', download=True, transform=self.transformation_test)
 
-        elif self.dataset_name == CALTECH101_DATASET: # dataset has no embedded train and test splits
-            self.train_dataset = datasets.Caltech101(root='./data_dir', target_type='category', download=True, transform=self.transformation_train)
-            self.contrastive_dataset = datasets.Caltech101(root='./data_dir', target_type='category', download=True, transform=self.transformation_contrastive)
-            self.test_dataset = datasets.Caltech101(root='./data_dir', target_type='category', download=True, transform=self.transformation_test)
-
+            else:
+                raise NotImplementedError("dataset not implemented yet")
         else:
-            raise NotImplementedError("dataset not implemented yet")
+
+            if self.dataset_name == DEBUG_DATASET:
+                self.train_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_train)
+                self.contrastive_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_contrastive)
+                self.test_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_test) # with Train=True with test_sampler in the DataLoader()
+
+            elif self.dataset_name == CIFAR10_DATASET:
+                self.train_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True,transform=self.transformation_train)
+                self.contrastive_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True,transform=self.transformation_contrastive)
+                self.test_dataset = datasets.CIFAR10(root='./data_dir', train=False, download=True, transform=self.transformation_test)
+
+            elif self.dataset_name == CIFAR100_DATASET:
+                self.train_dataset = datasets.CIFAR100(root='./data_dir', train=True, download=True,transform=self.transformation_train)
+                self.contrastive_dataset = datasets.CIFAR100(root='./data_dir', train=True, download=True,transform=self.transformation_contrastive)
+                self.test_dataset = datasets.CIFAR100(root='./data_dir', train=False, download=True, transform=self.transformation_test)
+                
+            elif self.dataset_name == IMAGENET_DATASET:
+                self.train_dataset = datasets.ImageNet(root='./data_dir', split='train', download=True, transform=self.transformation_train)
+                self.contrastive_dataset = datasets.ImageNet(root='./data_dir', split='train', download=True, transform=self.transformation_contrastive)
+                self.test_dataset = datasets.ImageNet(root='./data_dir', split='test', download=True, transform=self.transformation_test)
+
+            elif self.dataset_name == CALTECH101_DATASET: # dataset has no embedded train and test splits
+                self.train_dataset = datasets.Caltech101(root='./data_dir', target_type='category', download=True, transform=self.transformation_train)
+                self.contrastive_dataset = datasets.Caltech101(root='./data_dir', target_type='category', download=True, transform=self.transformation_contrastive)
+                self.test_dataset = datasets.Caltech101(root='./data_dir', target_type='category', download=True, transform=self.transformation_test)
+
+            else:
+                raise NotImplementedError("dataset not implemented yet")
         
 
     def create_loader(self):
@@ -216,8 +288,6 @@ class DataManager:
 
             # test_loader for test_step() methods under supervised or fine-tuning, where we get from test dataset with normalize transforms          
             test_loader= DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=test_sampler)
-
-
 
         else:
             raise NotImplementedError("create_loader() for this dataset has not been implemented yet")

@@ -1,26 +1,17 @@
+# adapted from simsiam model implementation from https://github.com/facebookresearch/simsiam
+import os
 import torch
-from torch.autograd import Variable
+import torch.nn as nn
 from tqdm import tqdm
 from losses.simclr_loss import simclr_loss
 from losses.supervised_loss import SupervisedLoss
 from trainers import BaseCombinedTrainer
 
 
-class CombinedJigsawTrainer(BaseCombinedTrainer):
+class CombinedRotTrainer(BaseCombinedTrainer):
     """Trainer for combined supervised and contrastive learning."""
 
-    def __init__(
-        self,
-        model,
-        train_loader,
-        test_loader,
-        ft_loader,
-        optimizer,
-        epochs,
-        temperature=0.5,
-        alpha=0.5,
-        save_dir=None
-    ):
+    def __init__(self, model, train_loader, test_loader, val_loader, ft_loader, optimizer, lr_scheduler, epochs, alpha=0.5, save_dir=None):
         """
         Initialize the combined trainer.
 
@@ -32,11 +23,9 @@ class CombinedJigsawTrainer(BaseCombinedTrainer):
             temperature: Temperature parameter for contrastive loss
             alpha: Weight for supervised loss
         """
-        super().__init__(model, train_loader, test_loader, ft_loader, optimizer, epochs)
-        self.temperature = temperature
+        super().__init__(model, train_loader, test_loader, val_loader, ft_loader, optimizer, lr_scheduler, epochs, save_dir)
         self.alpha = alpha
-        self.criterion_ssl = torch.nn.CrossEntropyLoss()
-        self.criterion = SupervisedLoss()
+        self.criterion = nn.CrossEntropyLoss().to(self.device)
 
     def train_step(self, dataloader):
         """
@@ -49,26 +38,19 @@ class CombinedJigsawTrainer(BaseCombinedTrainer):
         train_loss, train_acc = 0, 0
         ssl_loss, sup_loss = 0, 0
 
-        for batch, (images, labels) in enumerate(dataloader):
-            #images, labels = images.to(self.device), labels.to(self.device)
-            # calculate contrastive loss between two augmented images
-            permuted_tiles, permutation_idx, original_tiles, original_img = images[0].to(self.device), images[1].to(self.device),images[2].to(self.device), images[3].to(self.device)
-            labels = labels.to(self.device)
-
-            output, _ = self.model(permuted_tiles)
-            logits = Variable(output.argmax(dim=1).float(),requires_grad = True)
-            permutation_idx = Variable(permutation_idx.float(),requires_grad = True)
-            contrastive_loss = self.criterion_ssl(logits, permutation_idx)
+        for batch, (img, rotated_img, rotation_labels, labels) in enumerate(dataloader):
+            img, rotated_img, rotation_labels, labels = img.to(self.device), rotated_img.to(self.device), rotation_labels.to(self.device), labels.to(self.device)
+            pred_rot, pred = self.model(x1=rotated_img, x2=img)
+            contrastive_loss = self.criterion(pred_rot, rotation_labels)
             ssl_loss += contrastive_loss.item()
-            
-            # calculate supervised loss for the original image
-            _, pred = self.model(original_tiles)
             supervised_loss = self.criterion(pred, labels)
             sup_loss += supervised_loss.item()
 
             # Combined loss
-            loss = contrastive_loss + self.alpha * supervised_loss
+            loss = ssl_loss + self.alpha * supervised_loss
             train_loss += loss.item()
+            pred_labels = pred.argmax(dim=1)
+            train_acc += ((pred_labels == labels).sum().item()/len(pred_labels))
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -97,9 +79,8 @@ class CombinedJigsawTrainer(BaseCombinedTrainer):
         test_loss, test_acc = 0, 0
         with torch.inference_mode():
             for batch, (images, labels) in enumerate(dataloader):
-                permuted_tiles, permutation_idx, original_tiles, original_img = images[0].to(self.device), images[1].to(self.device),images[2].to(self.device), images[3].to(self.device)
-                labels = labels.to(self.device)
-                _, test_pred = self.model(original_tiles)
+                images, labels = images.to(self.device), labels.to(self.device)
+                _, test_pred = self.model(images, images)
                 loss = self.criterion(test_pred, labels)
                 test_loss += loss.item()
 

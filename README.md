@@ -8,20 +8,25 @@ python main.py --dataset [dataset_name] --encoder [encoder_name] --model [model_
 
 without []
 
-dataset_name : debug
-encoder : vgg
+dataset_name : debug, cifar10
+encoder : vgg, resnet18
 model_type : supervised, unsupervised, combined
-ssl_method : simclr
+ssl_method : simclr, simsiam, vicreg, rotation
+opt: sgd, lars, adam
+bs: 128, 256, 512
+lr: float
+wd: float
+seed: int
 ```
 
 ## future implementations
 
 models : supervised learning , self-supervised learning, combined learning (supervised + ssl)
 
-SSL methods : SimCLR✅, Jigsaw Puzzle🚧, SimSiam🚧, VICReg🚧
+SSL methods : SimCLR✅, Jigsaw Puzzle✅, SimSiam✅, VICReg✅
 
-encoders : VGG✅, Resnet-18✅, Resnet-50✅, Resner-101✅, and ViT-B🚧
+encoders : Resnet-18✅, Resnet-50✅, Resnet-101✅, MobileNetv3📝, InceptionNet📝 and TinyViT📝
 
-datasets :  debug (10% CIFAR-10)✅, CIFAR-10✅, CIFAR-100🚧, ImageNet🚧 and Caltech-101🚧
+datasets :  debug (10% CIFAR-10)✅, CIFAR-10✅, CIFAR-100✅, Caltech-101✅ and TinyImageNet📝
 
 📝 Planned --> ⏳ Ongoing --> 🚧 Done but unchecked (internal) --> ✅ Done and checked (internal) --> 💯 Approved (external)

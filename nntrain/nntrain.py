@@ -71,10 +71,18 @@ class NNTrain:
 
     def data_char(self):
         # Grab data characteristics
-        images_cont, labels_cont = next(iter(self.cont_loader))
+        try:
+            images_cont, labels_cont = next(iter(self.cont_loader))
+        except:
+            images, images_cont, labels_cont, labels = next(iter(self.cont_loader))
         images_train, labels_train = next(iter(self.train_loader))
         self.input_shape = images_train[0].shape
         self.input_shape_jigsaw = images_cont[0][0][0].shape
+        # self.input_shape_ftrot = images_cont[0].shape
+        try:
+            self.output_shape_ftrot = len(torch.unique(labels))
+        except:
+            pass
         self.color_channels = self.input_shape[1]
         self.output_shape = len(torch.unique(labels_cont))
         
@@ -103,12 +111,6 @@ class NNTrain:
         elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMCLR:
             self.model = CombinedSimCLR(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)
 
-        elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_JIGSAW:
-            self.model = Jigsaw(base_encoder=self.encoder, input_shape = self.input_shape_jigsaw, ft_input_shape=self.input_shape, output_shape = self.output_shape)        
-
-        elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_JIGSAW:
-            self.model = CombinedJigsaw(base_encoder=self.encoder, input_shape = self.input_shape_jigsaw, ft_input_shape=self.input_shape, output_shape = self.output_shape)
-
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMSIAM:
             self.model = SimSiam(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
 
@@ -124,8 +126,9 @@ class NNTrain:
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_ROTATION:
             self.model = Rotation(base_encoder=self.encoder, input_shape = self.input_shape, output_shape = self.output_shape)
 
-        # elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_ROTATION:
-        #     self.model = CombinedSimCLR(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape)
+        elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_ROTATION:
+            self.model = CombinedRotation(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape
+                                          ,output_shape_ssl=self.output_shape, output_shape_sup=self.output_shape_ftrot)
 
 
 
@@ -171,20 +174,6 @@ class NNTrain:
                                                  , epochs=self.epochs
                                                  , save_dir=self.checkpoint_dir if self.save_toggle else None)
             
-        elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_JIGSAW:
-            self.trainer = JigsawTrainer(model=self.model
-                                         , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, valcont_loader = self.valcont_loader
-                                         , optimizer=self.optimizer_selected, optimizer_name=self.optimizer_name, lr_scheduler = self.lr_scheduler_selected,lr=self.learning_rate, weight_decay=self.weight_decay
-                                         , epochs=self.epochs, epochs_pt = self.epochs_pt, epochs_ft = self.epochs_ft
-                                         , save_dir=self.checkpoint_dir if self.save_toggle else None)      
-            
-        elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_JIGSAW:
-            self.trainer = CombinedJigsawTrainer(model=self.model
-                                                 , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader
-                                                 , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
-                                                 , epochs=self.epochs
-                                                 , save_dir=self.checkpoint_dir if self.save_toggle else None)
-            
         elif self.model_name == MOD_UNSUPERVISED and self.ssl_method == SSL_SIMSIAM:
             self.trainer = SimSiamTrainer(model=self.model
                                           , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, valcont_loader = self.valcont_loader
@@ -217,15 +206,15 @@ class NNTrain:
             self.trainer = RotTrainer(model=self.model
                                          , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=self.train_loader, valcont_loader = self.valcont_loader
                                          , optimizer=self.optimizer_selected, optimizer_name=self.optimizer_name, lr_scheduler = self.lr_scheduler_selected,lr=self.learning_rate, weight_decay=self.weight_decay
-                                         , epochs=self.epochs, epochs_pt = self.epochs_pt, epochs_ft = self.epochs_ft
+                                         , epochs=self.epochs, epochs_pt = self.epochs_pt, epochs_ft = self.epochs_ft, ft_output = self.output_shape_ftrot
                                          , save_dir=self.checkpoint_dir if self.save_toggle else None)
             
-        # elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_SIMCLR:
-        #     self.trainer = CombinedSimCLRTrainer(model=self.model
-        #                                          , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None
-        #                                          , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
-        #                                          , epochs=self.epochs
-        #                                          , save_dir=self.checkpoint_dir if self.save_toggle else None)
+        elif self.model_name == MOD_COMBINED and self.ssl_method == SSL_ROTATION:
+            self.trainer = CombinedRotTrainer(model=self.model
+                                                 , train_loader=self.cont_loader, test_loader=self.test_loader, val_loader=self.val_loader, ft_loader=None
+                                                 , optimizer=self.optimizer_selected, lr_scheduler = self.lr_scheduler_selected
+                                                 , epochs=self.epochs
+                                                 , save_dir=self.checkpoint_dir if self.save_toggle else None)
     
         self.results = self.trainer.train()
 
