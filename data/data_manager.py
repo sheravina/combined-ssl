@@ -1,4 +1,5 @@
 import numpy as np
+import random
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -26,8 +27,10 @@ def rotate_img(img, rot):
 class DatasetWithRotation(torch.utils.data.Dataset):
     """Wrapper dataset that adds rotation augmentation to any dataset."""
     
-    def __init__(self, base_dataset) -> None:
+    def __init__(self, base_dataset, seed=None) -> None:
         self.base_dataset = base_dataset
+        # Create a separate random generator with the provided seed
+        self.rng = random.Random(seed)
     
     def __len__(self):
         return len(self.base_dataset)
@@ -36,8 +39,8 @@ class DatasetWithRotation(torch.utils.data.Dataset):
         # Get original image and label
         image, cls_label = self.base_dataset[index]
 
-        # Randomly select image rotation
-        rotation_label = random.choice([0, 1, 2, 3])
+        # Use the seeded random generator instead of global random
+        rotation_label = self.rng.choice([0, 1, 2, 3])
         image_rotated = rotate_img(image, rotation_label)
 
         rotation_label = torch.tensor(rotation_label).long()
@@ -114,31 +117,31 @@ class DataManager:
             if self.dataset_name == DEBUG_DATASET:
                 self.train_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_train)
                 base_contrastive = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_contrastive)
-                self.contrastive_dataset = DatasetWithRotation(base_contrastive)
+                self.contrastive_dataset = DatasetWithRotation(base_contrastive, seed=self.seed)
                 self.test_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_test)
 
             elif self.dataset_name == CIFAR10_DATASET:
                 self.train_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_train)
                 base_contrastive = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_contrastive)
-                self.contrastive_dataset = DatasetWithRotation(base_contrastive)
+                self.contrastive_dataset = DatasetWithRotation(base_contrastive, seed=self.seed)
                 self.test_dataset = datasets.CIFAR10(root='./data_dir', train=False, download=True, transform=self.transformation_test)
 
             elif self.dataset_name == CIFAR100_DATASET:
                 self.train_dataset = datasets.CIFAR100(root='./data_dir', train=True, download=True, transform=self.transformation_train)
                 base_contrastive = datasets.CIFAR100(root='./data_dir', train=True, download=True, transform=self.transformation_contrastive)
-                self.contrastive_dataset = DatasetWithRotation(base_contrastive)
+                self.contrastive_dataset = DatasetWithRotation(base_contrastive, seed=self.seed)
                 self.test_dataset = datasets.CIFAR100(root='./data_dir', train=False, download=True, transform=self.transformation_test)
                     
             elif self.dataset_name == IMAGENET_DATASET:
                 self.train_dataset = datasets.ImageNet(root='./data_dir', split='train', download=True, transform=self.transformation_train)
                 base_contrastive = datasets.ImageNet(root='./data_dir', split='train', download=True, transform=self.transformation_contrastive)
-                self.contrastive_dataset = DatasetWithRotation(base_contrastive)
+                self.contrastive_dataset = DatasetWithRotation(base_contrastive, seed=self.seed)
                 self.test_dataset = datasets.ImageNet(root='./data_dir', split='test', download=True, transform=self.transformation_test)
 
             elif self.dataset_name == CALTECH101_DATASET: # dataset has no embedded train and test splits
                 self.train_dataset = datasets.Caltech101(root='./data_dir', target_type='category', download=True, transform=self.transformation_train)
                 base_contrastive = datasets.Caltech101(root='./data_dir', target_type='category', download=True, transform=self.transformation_contrastive)
-                self.contrastive_dataset = DatasetWithRotation(base_contrastive)
+                self.contrastive_dataset = DatasetWithRotation(base_contrastive, seed=self.seed)
                 self.test_dataset = datasets.Caltech101(root='./data_dir', target_type='category', download=True, transform=self.transformation_test)
 
             else:
