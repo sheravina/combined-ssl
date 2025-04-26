@@ -45,4 +45,4 @@ class CombinedVICReg(BaseModel):
         z = self.encoder(z)
         pred = self.classifier_head(z)
 
-        return x, y, pred
+        return x.detach(), y.detach(), pred
