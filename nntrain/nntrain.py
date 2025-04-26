@@ -142,7 +142,7 @@ class NNTrain:
 
 
         if self.optimizer_name == OPT_ADAM:
-            self.optimizer_selected = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
+            self.optimizer_selected = optim.AdamW(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
 
         elif self.optimizer_name == OPT_LARS:
             self.optimizer_selected = LARS(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay, momentum=0.9)
