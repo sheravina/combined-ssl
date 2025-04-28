@@ -4,15 +4,21 @@ from encoders.base_encoder import BaseEncoder
 from utils.constants import *
 
 class TinyViTEncoder(BaseEncoder):
-    def __init__(self, model_type=ENC_TINYVIT, pretrained=False):
+    def __init__(self, model_type=ENC_TINYVIT, pretrained=True):
         super().__init__()
 
         if model_type == ENC_TINYVIT:
             self.model = create_model(
-                'tiny_vit_21m_224.dist_in22k_ft_in1k', 
+                'vit_small_patch16_224.augreg_in1k', 
                 pretrained=pretrained,
-                features_only=True
+                features_only=True,
+                img_size=32,
+                patch_size=4
             )
+            
+            # Modify the patch embedding layer to accept 32x32 inputs
+            # self.model.patch_embed.img_size = (32, 32)
+            
         else:
             raise ValueError(f"Unsupported model type: {model_type}")
 
@@ -21,7 +27,7 @@ class TinyViTEncoder(BaseEncoder):
 
     def forward(self, x):
         features = self.model(x)
-        x = features[-1]               # Use the last stage output
-        x = self.pool(x)               # Global pooling
-        x = self.flatten(x)            # Flatten to vector
+        x = features[-1]
+        x = self.pool(x)
+        x = self.flatten(x)
         return x

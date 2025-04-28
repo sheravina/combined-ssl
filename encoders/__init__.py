@@ -5,5 +5,7 @@ from encoders.vit import ViTEncoder
 from .mnet import MobileNetV3
 from .inet import InceptionNet
 from .tinyvit import TinyViTEncoder
+from .vision_transformers import vit_tiny, vit_base, vit_small, VisionTransformer
 
-__all__ = ["BaseEncoder", "VGGEncoder", "ResNetEncoder", "ViTEncoder","MobileNetV3","InceptionNet","TinyViTEncoder"]
+__all__ = ["BaseEncoder", "VGGEncoder", "ResNetEncoder", "ViTEncoder","MobileNetV3","InceptionNet","TinyViTEncoder"
+           ,"VisionTransformer","vit_tiny", "vit_base", "vit_small"]

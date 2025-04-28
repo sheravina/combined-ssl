@@ -1,4 +1,3 @@
-# TODO: hard coded variables be moved soon
 import os
 import torch
 import torch.optim as optim
@@ -91,11 +90,11 @@ class NNTrain:
         if self.encoder_name == ENC_VGG:
             self.encoder = VGGEncoder()
 
-        elif self.encoder_name == ENC_RESNET18 or self.encoder_name == ENC_RESNET50 or self.encoder_name == ENC_RESNET101: 
+        elif self.encoder_name in [ENC_RESNET18, ENC_RESNET50, ENC_RESNET101, ENC_RESNET50_PT]:
             self.encoder = ResNetEncoder(model_type=self.encoder_name)
 
-        elif self.encoder_name == ENC_VIT:
-            self.encoder = ViTEncoder()
+        elif self.encoder_name == ENC_VIT_TINY:
+            self.encoder = ViTEncoder(ENC_VIT_TINY)
 
         elif self.encoder_name == ENC_MNETV3:
             self.encoder = MobileNetV3()
@@ -105,6 +104,7 @@ class NNTrain:
         
         elif self.encoder_name == ENC_TINYVIT:
             self.encoder = TinyViTEncoder(ENC_TINYVIT)
+        
     
     def init_model_trainer(self):
 
@@ -139,7 +139,26 @@ class NNTrain:
             self.model = CombinedRotation(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape
                                           ,output_shape_ssl=self.output_shape, output_shape_sup=self.output_shape_ftrot)
 
-
+        # print(f"\nModel Summary for {self.model_name} with {self.encoder_name}:")
+        # summary(self.model)
+        
+        # # Safely find and print kernel information by searching through all modules
+        # print("\nConvolutional layer kernels:")
+        # found_conv = False
+        # for name, module in self.model.named_modules():
+        #     if isinstance(module, torch.nn.Conv2d):
+        #         found_conv = True
+        #         print(f"Layer: {name}")
+        #         print(f"  Kernel shape: {module.weight.shape}")
+        #         print(f"  Sample kernel values (first filter, first channel):")
+        #         print(f"  {module.weight[0, 0].detach().cpu().numpy()}")
+        #         # Only print details for the first few conv layers
+        #         if name.count('.') > 2:  # Skip printing too many layers
+        #             print("  ...")
+        #             break
+        
+        # if not found_conv:
+        #     print("No convolutional layers found in the model.")
 
         if self.optimizer_name == OPT_ADAM:
             self.optimizer_selected = optim.AdamW(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)

@@ -16,6 +16,8 @@ class ResNetEncoder(BaseEncoder):
             model = resnet50(weights=None, zero_init_residual=zero_init_residual)
         elif model_type == ENC_RESNET101:
             model = resnet101(weights=None, zero_init_residual=zero_init_residual)
+        elif model_type == ENC_RESNET50_PT:
+            model = resnet50(weights='DEFAULT')
         else:
             raise ValueError(f"Unsupported model type: {model_type}")
 
