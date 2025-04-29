@@ -22,6 +22,7 @@ class ResNetEncoder(BaseEncoder):
             raise ValueError(f"Unsupported model type: {model_type}")
 
         # Remove the classification head --  ends with the layer AdaptiveAvgPool2d
+        model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.features = nn.Sequential(*list(model.children())[:-1])
         self.flatten = nn.Flatten()
 
