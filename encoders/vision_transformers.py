@@ -22,8 +22,15 @@ import warnings
 import torch
 import torch.nn as nn
 
-imagesize = 32
+## https://github.com/lucidrains/vit-pytorch/blob/main/README.md
+## patch_size: int. Size of patches. image_size must be divisible by patch_size. 
+## The number of patches is:  n = (image_size // patch_size) ** 2 and n must be greater than 16.
+## Patch Size 4 ViT https://github.com/kentaroy47/vision-transformers-cifar10 , the bigger the patchsize, the lower the acc
+
+imagesize = 32 
 patchsize = 4 
+do = 0.1 
+attn_do = 0.1 
 
 def _no_grad_trunc_normal_(tensor, mean, std, a, b):
     # Cut & paste from PyTorch official master until it's in a few official releases - RW
@@ -276,19 +283,19 @@ class VisionTransformer(nn.Module):
 def vit_tiny(patch_size=patchsize, **kwargs):
     model = VisionTransformer(
         patch_size=patch_size, embed_dim=192, depth=12, num_heads=3, mlp_ratio=4,
-        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), drop_rate= do, attn_drop_rate= attn_do, **kwargs)
     return model
 
 
 def vit_small(patch_size=patchsize, **kwargs):
     model = VisionTransformer(
         patch_size=patch_size, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4,
-        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), drop_rate= do, attn_drop_rate= attn_do, **kwargs)
     return model
 
 
 def vit_base(patch_size=patchsize, **kwargs):
     model = VisionTransformer(
         patch_size=patch_size, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4,
-        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), drop_rate= do, attn_drop_rate= attn_do, **kwargs)
     return model

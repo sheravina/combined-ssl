@@ -105,6 +105,9 @@ class NNTrain:
         elif self.encoder_name == ENC_TINYVIT:
             self.encoder = TinyViTEncoder(ENC_TINYVIT)
         
+        elif self.encoder_name == ENC_CUSTOMRESNET:
+            self.encoder = CustomResNet()
+        
     
     def init_model_trainer(self):
 
@@ -159,6 +162,24 @@ class NNTrain:
         
         # if not found_conv:
         #     print("No convolutional layers found in the model.")
+
+        # pretrained_path = os.path.join('pt_models', 'simclr_resnet50.pth')
+        # if os.path.exists(pretrained_path):
+        #     print(f"Loading pretrained model from {pretrained_path}")
+        #     checkpoint = torch.load(pretrained_path, weights_only=True)
+        #     state_dict = checkpoint['state_dict']
+        #     # for k in list(state_dict.keys()):
+        #     #     # retain only encoder up to before the embedding layer
+        #     #     if k.startswith('module.encoder') and not k.startswith('module.encoder.fc'):
+        #     #         # remove prefix
+        #     #         state_dict[k[len("module.encoder."):]] = state_dict[k]
+        #     #     # delete renamed or unused k
+        #     #     del state_dict[k]
+        #     self.model.load_state_dict(state_dict)
+        #     print("Pretrained model loaded successfully")
+        # else:
+        #     print(f"Warning: Pretrained model not found at {pretrained_path}. Training from scratch.")
+
 
         if self.optimizer_name == OPT_ADAM:
             self.optimizer_selected = optim.AdamW(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)

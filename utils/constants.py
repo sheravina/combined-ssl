@@ -25,6 +25,7 @@ ENC_TINYVIT = "timmtinyvit"
 ENC_VIT_TINY = "vit_tiny"
 ENC_VIT_SMALL = "vit_small"
 ENC_VIT_BASE = "vit_base"
+ENC_CUSTOMRESNET = "custom"
 
 
 # Model Name

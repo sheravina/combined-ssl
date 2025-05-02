@@ -4,8 +4,11 @@ from nntrain import NNTrain
 from utils.constants import DEBUG_DATASET
 from pprint import pprint
 
+
+
 if __name__ == "__main__":
     # get the arguments from the command line
+    
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset",
@@ -80,6 +83,10 @@ if __name__ == "__main__":
 
 
     args = parser.parse_args()
+
+    def exclude_bias_and_norm(p):
+        return p.ndim == 1 or "bn" in p.name or "ln" in p.name
+
 
 
     # start training neural network!!
