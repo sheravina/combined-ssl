@@ -28,7 +28,7 @@ import torch.nn as nn
 ## Patch Size 4 ViT https://github.com/kentaroy47/vision-transformers-cifar10 , the bigger the patchsize, the lower the acc
 
 imagesize = 32 
-patchsize = 4 
+patchsize = 4
 do = 0.1 
 attn_do = 0.1 
 

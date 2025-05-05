@@ -96,6 +96,12 @@ class NNTrain:
         elif self.encoder_name == ENC_VIT_TINY:
             self.encoder = ViTEncoder(ENC_VIT_TINY)
 
+        elif self.encoder_name == ENC_VIT_SMALL:
+            self.encoder = ViTEncoder(ENC_VIT_SMALL)
+
+        elif self.encoder_name == ENC_VIT_BASE:
+            self.encoder = ViTEncoder(ENC_VIT_BASE)
+
         elif self.encoder_name == ENC_MNETV3:
             self.encoder = MobileNetV3()
         
@@ -142,8 +148,8 @@ class NNTrain:
             self.model = CombinedRotation(base_encoder=self.encoder, input_shape = self.input_shape, output_shape=self.output_shape
                                           ,output_shape_ssl=self.output_shape, output_shape_sup=self.output_shape_ftrot)
 
-        # print(f"\nModel Summary for {self.model_name} with {self.encoder_name}:")
-        # summary(self.model)
+        print(f"\nModel Summary for {self.model_name} with {self.encoder_name}:")
+        summary(self.model)
         
         # # Safely find and print kernel information by searching through all modules
         # print("\nConvolutional layer kernels:")
@@ -182,7 +188,7 @@ class NNTrain:
 
 
         if self.optimizer_name == OPT_ADAM:
-            self.optimizer_selected = optim.AdamW(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
+            self.optimizer_selected = optim.Adam(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay)
 
         elif self.optimizer_name == OPT_LARS:
             self.optimizer_selected = LARS(self.model.parameters(),lr=self.learning_rate, weight_decay=self.weight_decay, momentum=0.9)

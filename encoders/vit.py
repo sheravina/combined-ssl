@@ -6,7 +6,7 @@ from .vision_transformers import vit_tiny, vit_small, vit_base
 class ViTEncoder(BaseEncoder):
     """Vision Transformer backbone encoder"""
 
-    def __init__(self, model_type, img_size=32, patch_size=16):
+    def __init__(self, model_type, img_size=32, patch_size=4):
         super().__init__()
         
         # Import the vision transformer models from the source file
