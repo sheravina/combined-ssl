@@ -9,7 +9,7 @@ from torch.utils.data import SubsetRandomSampler, DataLoader
 from torchvision import datasets
 from utils.constants import *
 from transformations import SimCLRTransformations
-from transformations import basenorm_transformation, base_transformation, inet_transform, inet_simclr_transform
+from transformations import train_transformation, test_transformation, inet_transform, inet_simclr_transform
 
 def rotate_img(img, rot):
     if rot == 0: # 0 degrees rotation
@@ -93,17 +93,17 @@ class DataManager:
                 raise NotImplementedError("transformation not implemented yet")
 
         else:
-            self.transformation_train = basenorm_transformation
+            self.transformation_train = train_transformation
 
             if self.ssl_method in [SSL_SIMCLR, SSL_SIMSIAM, SSL_VICREG]:
-                self.transformation_test = basenorm_transformation
+                self.transformation_test = test_transformation
                 self.transformation_contrastive = SimCLRTransformations(
                     n_views=2,
                     include_original=True
                 )
             elif self.ssl_method == SSL_ROTATION:
-                self.transformation_test = basenorm_transformation
-                self.transformation_contrastive = basenorm_transformation
+                self.transformation_test = test_transformation
+                self.transformation_contrastive = train_transformation
             else:
                 raise NotImplementedError("transformation not implemented yet")
 

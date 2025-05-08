@@ -1,8 +1,8 @@
 from .simclr import SimCLRTransformations
 from .constants_transformation import (
     base_transformation,
-    basenorm_transformation,
-    basenorm_jp_transformation,
+    train_transformation,
+    test_transformation,
     simclr_transformation,
     inet_transform,
     inet_simclr_transform
@@ -11,8 +11,8 @@ from .constants_transformation import (
 __all__ = [
     "SimCLRTransformations",    
     "base_transformation",
-    "basenorm_transformation",
-    "basenorm_jp_transformation",
+    "train_transformation",
+    "test_transformation",
     "simclr_transformation",
     "inet_transform",
     "inet_simclr_transform"

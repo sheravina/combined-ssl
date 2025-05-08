@@ -5,20 +5,19 @@ norm_std = (0.2023, 0.1994, 0.2010)
 
 base_transformation = transforms.ToTensor()
 
-basenorm_transformation = transforms.Compose(
+train_transformation = transforms.Compose(
     [
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize(norm_mean, norm_std),
+        transforms.Normalize(norm_mean, norm_std)
     ]
 )
 
-basenorm_jp_transformation = transforms.Compose( #with chances of grayscale
+test_transformation = transforms.Compose(
     [
         transforms.ToTensor(),
-        transforms.RandomApply([transforms.Grayscale(num_output_channels=3)], p=0.2),
-        transforms.Normalize(norm_mean, norm_std),
+        transforms.Normalize(norm_mean, norm_std)
     ]
 )
 
@@ -35,7 +34,7 @@ simclr_transformation = transforms.Compose(
 
 inet_transform = transforms.Compose([
     transforms.Resize((299, 299)),  # 🔥 Required for InceptionV3!
-    *basenorm_transformation.transforms
+    *train_transformation.transforms
 ])
 
 inet_simclr_transform = transforms.Compose([
