@@ -1,14 +1,16 @@
 from torchvision import transforms
 
 norm_mean = (0.4914, 0.4822, 0.4465)
-norm_std = (0.2470, 0.2435, 0.2616)
+norm_std = (0.2023, 0.1994, 0.2010)
 
 base_transformation = transforms.ToTensor()
 
 basenorm_transformation = transforms.Compose(
     [
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize(norm_mean, (0.2470, 0.2435, 0.2616)),
+        transforms.Normalize(norm_mean, norm_std),
     ]
 )
 
