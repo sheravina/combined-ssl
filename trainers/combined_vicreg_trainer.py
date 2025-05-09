@@ -82,7 +82,7 @@ class CombinedVICRegTrainer(BaseCombinedTrainer):
         """
         super().__init__(model, train_loader, test_loader, val_loader, ft_loader, optimizer, lr_scheduler, epochs, save_dir)
         self.alpha = alpha
-        self.criterion = SupervisedLoss()
+        self.criterion = torch.nn.CrossEntropyLoss().to(self.device)
         self.sim_coeff = 25.0
         self.std_coeff = 25.0
         self.cov_coeff = 1.0

@@ -25,7 +25,7 @@ class CombinedSimSiamTrainer(BaseCombinedTrainer):
         super().__init__(model, train_loader, test_loader, val_loader, ft_loader, optimizer, lr_scheduler, epochs, save_dir)
         self.alpha = alpha
         self.criterion_ssl = torch.nn.CosineSimilarity(dim=1).to(self.device)
-        self.criterion_sup = SupervisedLoss()
+        self.criterion_sup = torch.nn.CrossEntropyLoss().to(self.device)
 
     def train_step(self, dataloader):
         """
