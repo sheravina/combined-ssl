@@ -23,6 +23,8 @@ class ResNetEncoder(BaseEncoder):
 
         # Remove the classification head --  ends with the layer AdaptiveAvgPool2d
         model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        model.maxpool = nn.Identity()
+        model.fc = nn.Identity() # remove final fully connected layer
         self.features = nn.Sequential(*list(model.children())[:-1])
         self.flatten = nn.Flatten()
 
