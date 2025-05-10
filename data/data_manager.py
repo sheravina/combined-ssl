@@ -68,6 +68,8 @@ class DataManager:
             torch.cuda.manual_seed_all(self.seed)
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
+        
+        print(f"CUDA is available:{torch.cuda.is_available()}")
 
         self.create_contrastive_transform()
         self.prepare_dataset() 
