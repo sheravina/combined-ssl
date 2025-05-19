@@ -4,6 +4,9 @@ CIFAR10_DATASET = "cifar10"
 CIFAR100_DATASET = "cifar100"
 CALTECH101_DATASET = "caltech101"
 IMAGENET_DATASET = "imagenet"
+IMBV1_CIFAR10_DATASET ="imbv1"
+IMBV2_CIFAR10_DATASET ="imbv2"
+IMBV3_CIFAR10_DATASET ="imbv3"
 
 # SSL Method simclr, moco, simsiam, jigsaw, vae, simmim
 SSL_SIMCLR = "simclr"

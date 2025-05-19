@@ -122,7 +122,7 @@ class DataManager:
                 self.contrastive_dataset = DatasetWithRotation(base_contrastive, seed=self.seed)
                 self.test_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_test)
 
-            elif self.dataset_name == CIFAR10_DATASET:
+            elif self.dataset_name in [CIFAR10_DATASET, IMBV1_CIFAR10_DATASET, IMBV2_CIFAR10_DATASET,  IMBV3_CIFAR10_DATASET]:
                 self.train_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_train)
                 base_contrastive = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_contrastive)
                 self.contrastive_dataset = DatasetWithRotation(base_contrastive, seed=self.seed)
@@ -155,7 +155,7 @@ class DataManager:
                 self.contrastive_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_contrastive)
                 self.test_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True, transform=self.transformation_test) # with Train=True with test_sampler in the DataLoader()
 
-            elif self.dataset_name == CIFAR10_DATASET:
+            elif self.dataset_name in [CIFAR10_DATASET, IMBV1_CIFAR10_DATASET, IMBV2_CIFAR10_DATASET,  IMBV3_CIFAR10_DATASET]:
                 self.train_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True,transform=self.transformation_train)
                 self.contrastive_dataset = datasets.CIFAR10(root='./data_dir', train=True, download=True,transform=self.transformation_contrastive)
                 self.test_dataset = datasets.CIFAR10(root='./data_dir', train=False, download=True, transform=self.transformation_test)
@@ -270,7 +270,174 @@ class DataManager:
 
             # test_loader for test_step() methods under supervised or fine-tuning 
             test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)
+
+        elif self.dataset_name == IMBV1_CIFAR10_DATASET:
+            all_labels = []
+            for i in range(len(self.train_dataset)):
+                img, label = self.train_dataset[i]
+                all_labels.append(label)
+
+            # Convert to numpy array for easier handling
+            all_labels = np.array(all_labels)
+            all_indices = np.arange(len(all_labels))
+
+            # Create imbalance by reducing samples from some classes
+            imbalanced_indices = []
             
+            # Use NumPy's RandomState with your seed for consistent results
+            rng = np.random.RandomState(self.seed)
+            
+            for class_idx in range(10):  # CIFAR-10 has 10 classes
+                class_indices = all_indices[all_labels == class_idx]
+                if class_idx < 5:  # Keep all samples for first 5 classes
+                    imbalanced_indices.extend(class_indices)
+                else:  # Keep only 10% for last 5 classes
+                    # Use the seeded random number generator
+                    reduced_indices = rng.choice(
+                        class_indices, 
+                        size=int(0.1 * len(class_indices)), 
+                        replace=False
+                    )
+                    imbalanced_indices.extend(reduced_indices)
+            
+            # Use the imbalanced set of indices
+            all_indices = np.array(imbalanced_indices)
+            all_labels = all_labels[all_indices]
+            
+            # Split into train and validation without stratification
+            train_indices, val_indices = train_test_split(
+                all_indices,
+                test_size=0.1,
+                random_state=self.seed,
+                stratify=None  # No stratification for imbalanced dataset
+            )
+
+            # Create samplers with the generator
+            val_sampler = SubsetRandomSampler(val_indices, generator=self.generator)
+            train_sampler = SubsetRandomSampler(train_indices, generator=self.generator)
+
+            # train_loader and val_loader used for supervised methods
+            train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=train_sampler)
+            val_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=val_sampler)
+
+            # cont_loader and valcont_loader used for unsupervised task
+            cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
+            valcont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=val_sampler)
+
+            # test_loader for test_step() methods
+            test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)   
+
+        elif self.dataset_name == IMBV2_CIFAR10_DATASET:
+            all_labels = []
+            for i in range(len(self.train_dataset)):
+                img, label = self.train_dataset[i]
+                all_labels.append(label)
+
+            # Convert to numpy array for easier handling
+            all_labels = np.array(all_labels)
+            all_indices = np.arange(len(all_labels))
+
+            # Create imbalance by reducing samples from the first five classes
+            imbalanced_indices = []
+            
+            # Use NumPy's RandomState with your seed for consistent results
+            rng = np.random.RandomState(self.seed)
+            
+            for class_idx in range(10):  # CIFAR-10 has 10 classes
+                class_indices = all_indices[all_labels == class_idx]
+                if class_idx < 5:  # Keep only 10% for first 5 classes
+                    # Use the seeded random number generator
+                    reduced_indices = rng.choice(
+                        class_indices, 
+                        size=int(0.1 * len(class_indices)), 
+                        replace=False
+                    )
+                    imbalanced_indices.extend(reduced_indices)
+                else:  # Keep all samples for last 5 classes
+                    imbalanced_indices.extend(class_indices)
+            
+            # Use the imbalanced set of indices
+            all_indices = np.array(imbalanced_indices)
+            all_labels = all_labels[all_indices]
+            
+            # Split into train and validation without stratification
+            train_indices, val_indices = train_test_split(
+                all_indices,
+                test_size=0.1,
+                random_state=self.seed,
+                stratify=None  # No stratification for imbalanced dataset
+            )
+
+            # Create samplers with the generator
+            val_sampler = SubsetRandomSampler(val_indices, generator=self.generator)
+            train_sampler = SubsetRandomSampler(train_indices, generator=self.generator)
+
+            # train_loader and val_loader used for supervised methods
+            train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=train_sampler)
+            val_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=val_sampler)
+
+            # cont_loader and valcont_loader used for unsupervised task
+            cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
+            valcont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=val_sampler)
+
+            # test_loader for test_step() methods
+            test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False) 
+
+        elif self.dataset_name == IMBV3_CIFAR10_DATASET:
+            all_labels = []
+            for i in range(len(self.train_dataset)):
+                img, label = self.train_dataset[i]
+                all_labels.append(label)
+
+            # Convert to numpy array for easier handling
+            all_labels = np.array(all_labels)
+            all_indices = np.arange(len(all_labels))
+
+            # Create imbalance by reducing samples from even-indexed classes
+            imbalanced_indices = []
+            
+            # Use NumPy's RandomState with your seed for consistent results
+            rng = np.random.RandomState(self.seed)
+            
+            for class_idx in range(10):  # CIFAR-10 has 10 classes
+                class_indices = all_indices[all_labels == class_idx]
+                if class_idx % 2 == 0:  # Even classes (0, 2, 4, 6, 8) kept at 10%
+                    # Use the seeded random number generator
+                    reduced_indices = rng.choice(
+                        class_indices, 
+                        size=int(0.1 * len(class_indices)), 
+                        replace=False
+                    )
+                    imbalanced_indices.extend(reduced_indices)
+                else:  # Odd classes (1, 3, 5, 7, 9) keep all samples
+                    imbalanced_indices.extend(class_indices)
+            
+            # Use the imbalanced set of indices
+            all_indices = np.array(imbalanced_indices)
+            all_labels = all_labels[all_indices]
+            
+            # Split into train and validation without stratification
+            train_indices, val_indices = train_test_split(
+                all_indices,
+                test_size=0.1,
+                random_state=self.seed,
+                stratify=None  # No stratification for imbalanced dataset
+            )
+
+            # Create samplers with the generator
+            val_sampler = SubsetRandomSampler(val_indices, generator=self.generator)
+            train_sampler = SubsetRandomSampler(train_indices, generator=self.generator)
+
+            # train_loader and val_loader used for supervised methods
+            train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=train_sampler)
+            val_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=val_sampler)
+
+            # cont_loader and valcont_loader used for unsupervised task
+            cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
+            valcont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=val_sampler)
+
+            # test_loader for test_step() methods
+            test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)      
 
         elif self.dataset_name == CALTECH101_DATASET:
             all_labels = []
