@@ -238,7 +238,7 @@ class DataManager:
             # only works if they have the same structure and ordering
             test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=test_sampler)
 
-        elif self.dataset_name == CIFAR10_DATASET or CIFAR100_DATASET or IMAGENET_DATASET:
+        elif self.dataset_name in [CIFAR10_DATASET, CIFAR100_DATASET, IMAGENET_DATASET]:
             all_labels = []
             for i in range(len(self.train_dataset)):
                 img, label = self.train_dataset[i]
@@ -523,8 +523,8 @@ class DataManager:
         #     test_indices.remove(idx)
             
         # # Print verification messages
-        # print(f"Final split sizes - Train: {len(train_indices)}, Val: {len(val_indices)}, Test: {len(test_indices)}")
-        # print(f"Total indices: {len(train_indices) + len(val_indices) + len(test_indices)}")
+        print(f"Final split sizes - Train: {len(train_indices)}, Val: {len(val_indices)}")
+        print(f"Total indices: {len(train_indices) + len(val_indices)}")
         # print(f"Original sampled size: {len(sampled_indices)}")
         
         return train_loader, cont_loader, test_loader, val_loader, valcont_loader
