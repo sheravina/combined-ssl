@@ -337,7 +337,7 @@ class DataManager:
             all_labels = np.array(all_labels)
             all_indices = np.arange(len(all_labels))
 
-            # Create imbalance by reducing samples from the first five classes
+            # Create imbalance by reducing samples from some classes
             imbalanced_indices = []
             
             # Use NumPy's RandomState with your seed for consistent results
@@ -345,7 +345,9 @@ class DataManager:
             
             for class_idx in range(10):  # CIFAR-10 has 10 classes
                 class_indices = all_indices[all_labels == class_idx]
-                if class_idx < 5:  # Keep only 10% for first 5 classes
+                if class_idx % 2 == 0:  # Keep all samples for first 5 classes
+                    imbalanced_indices.extend(class_indices)
+                else:  # Keep only 10% for last 5 classes
                     # Use the seeded random number generator
                     reduced_indices = rng.choice(
                         class_indices, 
@@ -353,8 +355,6 @@ class DataManager:
                         replace=False
                     )
                     imbalanced_indices.extend(reduced_indices)
-                else:  # Keep all samples for last 5 classes
-                    imbalanced_indices.extend(class_indices)
             
             # Use the imbalanced set of indices
             all_indices = np.array(imbalanced_indices)
@@ -393,7 +393,7 @@ class DataManager:
             all_labels = np.array(all_labels)
             all_indices = np.arange(len(all_labels))
 
-            # Create imbalance by reducing samples from even-indexed classes
+            # Create imbalance by reducing samples from some classes
             imbalanced_indices = []
             
             # Use NumPy's RandomState with your seed for consistent results
@@ -401,7 +401,9 @@ class DataManager:
             
             for class_idx in range(10):  # CIFAR-10 has 10 classes
                 class_indices = all_indices[all_labels == class_idx]
-                if class_idx % 2 == 0:  # Even classes (0, 2, 4, 6, 8) kept at 10%
+                if class_idx % 2 != 0:  # Keep all samples for first 5 classes
+                    imbalanced_indices.extend(class_indices)
+                else:  # Keep only 10% for last 5 classes
                     # Use the seeded random number generator
                     reduced_indices = rng.choice(
                         class_indices, 
@@ -409,8 +411,6 @@ class DataManager:
                         replace=False
                     )
                     imbalanced_indices.extend(reduced_indices)
-                else:  # Odd classes (1, 3, 5, 7, 9) keep all samples
-                    imbalanced_indices.extend(class_indices)
             
             # Use the imbalanced set of indices
             all_indices = np.array(imbalanced_indices)
@@ -437,52 +437,7 @@ class DataManager:
             valcont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=val_sampler)
 
             # test_loader for test_step() methods
-            test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)      
-
-        elif self.dataset_name == CALTECH101_DATASET:
-            all_labels = []
-            for i in range(len(self.test_dataset)):
-                img, label = self.test_dataset[i]
-                all_labels.append(label)
-
-            # Convert to numpy array for easier handling
-            all_labels = np.array(all_labels)
-
-            # Take a stratified 10% sample first
-            all_indices = np.arange(len(all_labels))
-            test_indices, temp_indices = train_test_split(
-                all_indices,
-                test_size=0.6,  # 40% for temporary set
-                random_state=self.seed,
-                stratify=all_labels
-            )
-            
-            # Get labels for the temp subset
-            temp_labels = all_labels[temp_indices]
-            
-            # Second split: 20% validation, 20% test (from the 40% temp)
-            train_indices, val_indices = train_test_split(
-                temp_indices,
-                test_size=0.1,  # Split temp 50-50 for val and test
-                random_state=self.seed,
-                stratify=temp_labels
-            )
-
-            train_sampler = SubsetRandomSampler(train_indices, generator=self.generator)
-            test_sampler = SubsetRandomSampler(test_indices, generator=self.generator)
-            val_sampler = SubsetRandomSampler(val_indices, generator=self.generator)
-
-        
-            # train_loader and val_loader used for supervised methods, where we get from train dataset with normalize transforms
-            train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=train_sampler)
-            val_loader= DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=val_sampler)
-
-            # cont_loader and valcont_loader used for unsupervised task, where we get from train dataset with contrastive transforms
-            cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
-            valcont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=val_sampler)
-
-            # test_loader for test_step() methods under supervised or fine-tuning, where we get from test dataset with normalize transforms          
-            test_loader= DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=test_sampler)
+            test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False) 
 
         else:
             raise NotImplementedError("create_loader() for this dataset has not been implemented yet")
