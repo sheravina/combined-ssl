@@ -5,7 +5,7 @@ import torchvision
 import torchvision.transforms as transforms
 import random
 from sklearn.model_selection import train_test_split
-from torch.utils.data import SubsetRandomSampler, DataLoader
+from torch.utils.data import SubsetRandomSampler, DataLoader, Subset
 from torchvision import datasets
 from utils.constants import *
 from transformations import SimCLRTransformations
@@ -109,7 +109,56 @@ class DataManager:
             else:
                 raise NotImplementedError("transformation not implemented yet")
 
-    
+    def _generate_all_labels_batches(self, labels_for_sampler, batch_size):
+        """
+        A generator that yields batches of indices, ensuring each batch
+        contains at least one sample from every unique label.
+        """
+        # Get the indices relative to the subset we are sampling from (0 to N-1)
+        sampler_indices = np.arange(len(labels_for_sampler))
+        unique_labels = np.unique(labels_for_sampler)
+        
+        # A map from class label to the indices of samples with that label
+        class_indices_map = {lbl: sampler_indices[labels_for_sampler == lbl] for lbl in unique_labels}
+        
+        if batch_size < len(unique_labels):
+            raise ValueError(
+                f"Batch size ({batch_size}) must be greater than or equal to the "
+                f"number of unique classes ({len(unique_labels)}) to ensure all labels are in a batch."
+            )
+            
+        available_indices = set(sampler_indices)
+        
+        # Use the class's own seeded random number generator
+        rng = self.rng if hasattr(self, 'rng') else np.random.RandomState(self.seed)
+
+        while len(available_indices) > 0:
+            batch = []
+            # 1. Add one random, available sample from each class
+            for lbl in unique_labels:
+                available_class_indices = list(set(class_indices_map[lbl]) & available_indices)
+                if not available_class_indices:
+                    continue
+                    
+                chosen_index = rng.choice(available_class_indices)
+                batch.append(chosen_index)
+                available_indices.remove(chosen_index)
+                
+            # 2. Fill the rest of the batch
+            remaining_batch_size = batch_size - len(batch)
+            if remaining_batch_size > 0 and len(available_indices) > 0:
+                
+                # --- THIS IS THE CORRECTED LINE ---
+                fill_indices = rng.choice(
+                    list(available_indices),
+                    size=min(remaining_batch_size, len(available_indices)),
+                    replace=False
+                )
+                batch.extend(fill_indices)
+                available_indices.difference_update(fill_indices)
+                
+            rng.shuffle(batch)
+            yield batch
     
     def prepare_dataset(self):
         # train dataset for supervised model (transform to tensor + normalization)
@@ -272,60 +321,77 @@ class DataManager:
             test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)
 
         elif self.dataset_name == IMBV1_CIFAR10_DATASET:
-            all_labels = []
-            for i in range(len(self.train_dataset)):
-                img, label = self.train_dataset[i]
-                all_labels.append(label)
+            if hasattr(self.train_dataset, 'targets'):
+                original_all_labels = np.array(self.train_dataset.targets)
+            else:
+                original_all_labels = np.array([label for _, label in self.train_dataset])
 
-            # Convert to numpy array for easier handling
-            all_labels = np.array(all_labels)
-            all_indices = np.arange(len(all_labels))
+            original_all_indices = np.arange(len(original_all_labels))
 
-            # Create imbalance by reducing samples from some classes
             imbalanced_indices = []
-            
-            # Use NumPy's RandomState with your seed for consistent results
+
             rng = np.random.RandomState(self.seed)
-            
-            for class_idx in range(10):  # CIFAR-10 has 10 classes
-                class_indices = all_indices[all_labels == class_idx]
-                if class_idx < 5:  # Keep all samples for first 5 classes
+
+            for class_idx in range(10):
+                class_indices = original_all_indices[original_all_labels == class_idx]
+                if class_idx < 5:
                     imbalanced_indices.extend(class_indices)
-                else:  # Keep only 10% for last 5 classes
-                    # Use the seeded random number generator
+                else:
+                    num_samples_to_keep = int(0.1 * len(class_indices))
+                    if num_samples_to_keep == 0 and len(class_indices) > 0:
+                        num_samples_to_keep = 1
+
                     reduced_indices = rng.choice(
-                        class_indices, 
-                        size=int(0.1 * len(class_indices)), 
+                        class_indices,
+                        size=num_samples_to_keep,
                         replace=False
                     )
                     imbalanced_indices.extend(reduced_indices)
+
+            imbalanced_indices = np.array(imbalanced_indices)
+            rng.shuffle(imbalanced_indices)
+
+            imbalanced_dataset = Subset(self.train_dataset, imbalanced_indices)
+            imbalanced_labels = original_all_labels[imbalanced_indices]
             
-            # Use the imbalanced set of indices
-            all_indices = np.array(imbalanced_indices)
-            all_labels = all_labels[all_indices]
-            
-            # Split into train and validation without stratification
-            train_indices, val_indices = train_test_split(
-                all_indices,
+            # We still split to get the indices for train and validation
+            train_relative_indices, val_relative_indices = train_test_split(
+                np.arange(len(imbalanced_dataset)),
                 test_size=0.1,
                 random_state=self.seed,
-                stratify=None  # No stratification for imbalanced dataset
+                stratify=imbalanced_labels
             )
+            
+            # --- START OF CHANGES ---
 
-            # Create samplers with the generator
-            val_sampler = SubsetRandomSampler(val_indices, generator=self.generator)
-            train_sampler = SubsetRandomSampler(train_indices, generator=self.generator)
+            # 1. Get the labels for the training subset to pass to our generator
+            train_labels_for_sampler = imbalanced_labels[train_relative_indices]
 
-            # train_loader and val_loader used for supervised methods
-            train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=train_sampler)
-            val_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, sampler=val_sampler)
+            # 2. Create the train and validation subsets that the DataLoaders will use
+            train_subset = Subset(imbalanced_dataset, train_relative_indices)
+            val_subset = Subset(imbalanced_dataset, val_relative_indices)
+            
+            # Also create subsets for the contrastive dataset
+            contrastive_train_subset = Subset(self.contrastive_dataset, imbalanced_indices[train_relative_indices])
+            contrastive_val_subset = Subset(self.contrastive_dataset, imbalanced_indices[val_relative_indices])
 
-            # cont_loader and valcont_loader used for unsupervised task
-            cont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=train_sampler)
-            valcont_loader = DataLoader(dataset=self.contrastive_dataset, batch_size=self.batch_size, sampler=val_sampler)
+            # 3. Create the batch sampler by calling our new generator method
+            # This returns a generator object that yields lists of indices.
+            train_batch_sampler = list(self._generate_all_labels_batches(train_labels_for_sampler, self.batch_size))
 
-            # test_loader for test_step() methods
-            test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)   
+            # 4. Create DataLoaders using `batch_sampler`. 
+            # NOTE: When using `batch_sampler`, you MUST NOT use `batch_size`, `shuffle`, or `sampler`.
+            train_loader = DataLoader(dataset=train_subset, batch_sampler=train_batch_sampler)
+            cont_loader = DataLoader(dataset=contrastive_train_subset, batch_sampler=train_batch_sampler)
+
+            # Validation loader can remain the same, as balanced batches are less critical here.
+            val_sampler = SubsetRandomSampler(np.arange(len(val_subset)), generator=self.generator)
+            val_loader = DataLoader(dataset=val_subset, batch_size=self.batch_size, sampler=val_sampler)
+            valcont_loader = DataLoader(dataset=contrastive_val_subset, batch_size=self.batch_size, sampler=val_sampler)
+
+            test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)
+            
+            # --- END OF CHANGES ---
 
         elif self.dataset_name == IMBV2_CIFAR10_DATASET:
             all_labels = []
@@ -401,7 +467,7 @@ class DataManager:
             
             for class_idx in range(10):  # CIFAR-10 has 10 classes
                 class_indices = all_indices[all_labels == class_idx]
-                if class_idx % 2 != 0:  # Keep all samples for first 5 classes
+                if class_idx in [0, 1, 9, 8, 5]:  # Keep all samples for first 5 classes
                     imbalanced_indices.extend(class_indices)
                 else:  # Keep only 10% for last 5 classes
                     # Use the seeded random number generator
@@ -478,8 +544,7 @@ class DataManager:
         #     test_indices.remove(idx)
             
         # # Print verification messages
-        print(f"Final split sizes - Train: {len(train_indices)}, Val: {len(val_indices)}")
-        print(f"Total indices: {len(train_indices) + len(val_indices)}")
+
         # print(f"Original sampled size: {len(sampled_indices)}")
         
         return train_loader, cont_loader, test_loader, val_loader, valcont_loader
