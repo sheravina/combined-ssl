@@ -182,7 +182,13 @@ class DataManager:
                 base_contrastive = datasets.CIFAR100(root='./data_dir', train=True, download=True, transform=self.transformation_contrastive)
                 self.contrastive_dataset = DatasetWithRotation(base_contrastive, seed=self.seed)
                 self.test_dataset = datasets.CIFAR100(root='./data_dir', train=False, download=True, transform=self.transformation_test)
-                    
+
+            elif self.dataset_name == SVHN_DATASET:
+                self.train_dataset = datasets.SVHN(root='./data_dir', split="train", download=True, transform=self.transformation_train)
+                base_contrastive = datasets.SVHN(root='./data_dir', split="train", download=True, transform=self.transformation_contrastive)
+                self.contrastive_dataset = DatasetWithRotation(base_contrastive, seed=self.seed)
+                self.test_dataset = datasets.SVHN(root='./data_dir', split="test", download=True, transform=self.transformation_test)
+
             elif self.dataset_name == IMAGENET_DATASET:
                 self.train_dataset = datasets.ImageNet(root='./data_dir', split='train', download=True, transform=self.transformation_train)
                 base_contrastive = datasets.ImageNet(root='./data_dir', split='train', download=True, transform=self.transformation_contrastive)
@@ -213,7 +219,12 @@ class DataManager:
                 self.train_dataset = datasets.CIFAR100(root='./data_dir', train=True, download=True,transform=self.transformation_train)
                 self.contrastive_dataset = datasets.CIFAR100(root='./data_dir', train=True, download=True,transform=self.transformation_contrastive)
                 self.test_dataset = datasets.CIFAR100(root='./data_dir', train=False, download=True, transform=self.transformation_test)
-                
+
+            elif self.dataset_name == SVHN_DATASET:
+                self.train_dataset = datasets.SVHN(root='./data_dir', split="train", download=True,transform=self.transformation_train)
+                self.contrastive_dataset = datasets.SVHN(root='./data_dir', split="train", download=True,transform=self.transformation_contrastive)
+                self.test_dataset = datasets.SVHN(root='./data_dir', split="test", download=True, transform=self.transformation_test)            
+                            
             elif self.dataset_name == IMAGENET_DATASET:
                 self.train_dataset = datasets.ImageNet(root='./data_dir', split='train', download=True, transform=self.transformation_train)
                 self.contrastive_dataset = datasets.ImageNet(root='./data_dir', split='train', download=True, transform=self.transformation_contrastive)
@@ -287,7 +298,7 @@ class DataManager:
             # only works if they have the same structure and ordering
             test_loader = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, sampler=test_sampler)
 
-        elif self.dataset_name in [CIFAR10_DATASET, CIFAR100_DATASET, IMAGENET_DATASET]:
+        elif self.dataset_name in [CIFAR10_DATASET, CIFAR100_DATASET, IMAGENET_DATASET, SVHN_DATASET]:
             all_labels = []
             for i in range(len(self.train_dataset)):
                 img, label = self.train_dataset[i]

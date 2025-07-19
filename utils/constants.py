@@ -7,6 +7,7 @@ IMAGENET_DATASET = "imagenet"
 IMBV1_CIFAR10_DATASET ="imbv1"
 IMBV2_CIFAR10_DATASET ="imbv2"
 IMBV3_CIFAR10_DATASET ="imbv3"
+SVHN_DATASET = "svhn"
 
 # SSL Method simclr, moco, simsiam, jigsaw, vae, simmim
 SSL_SIMCLR = "simclr"
