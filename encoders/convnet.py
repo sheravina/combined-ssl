@@ -13,7 +13,7 @@ class ConvNetEncoder(BaseEncoder):
     and max pooling.
     """
 
-    def __init__(self, in_channels=3, dropout=0.0):
+    def __init__(self, in_channels=3, dropout=0.5):
         """
         Initializes the 13-layer ConvNet.
 
