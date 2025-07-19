@@ -9,7 +9,7 @@ from torch.utils.data import SubsetRandomSampler, DataLoader, Subset
 from torchvision import datasets
 from utils.constants import *
 from transformations import SimCLRTransformations
-from transformations import train_transformation, test_transformation, inet_transform, inet_simclr_transform
+# from transformations import train_transformation, test_transformation, inet_transform, inet_simclr_transform
 
 def rotate_img(img, rot):
     if rot == 0: # 0 degrees rotation
@@ -71,41 +71,105 @@ class DataManager:
         
         print(f"CUDA is available:{torch.cuda.is_available()}")
 
+        self.create_transform_constants()
         self.create_contrastive_transform()
         self.prepare_dataset() 
+
+    def create_transform_constants(self):
+
+        norm_mean = (0,0,0)
+        norm_std = (0,0,0)
+
+        if self.dataset_name in [DEBUG_DATASET, CIFAR10_DATASET, IMBV1_CIFAR10_DATASET, IMBV2_CIFAR10_DATASET,  IMBV3_CIFAR10_DATASET]:
+            norm_mean = (0.4914, 0.4822, 0.4465)
+            norm_std = (0.2023, 0.1994, 0.2010)
+        elif self.dataset_name == CIFAR100_DATASET:
+            norm_mean = (0.5071, 0.4865, 0.4409)
+            norm_std = (0.2673, 0.2564, 0.2762)
+        elif self.dataset_name == SVHN_DATASET:
+            norm_mean =  (0.4377, 0.4438, 0.4728)
+            norm_std = (0.1980, 0.2010, 0.1970)
+        
+        self.base_transformation = transforms.ToTensor()
+
+        self.train_transformation = transforms.Compose(
+            [
+                transforms.RandomCrop(32, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(norm_mean, norm_std)
+            ]
+        )
+
+        self.test_transformation = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize(norm_mean, norm_std)
+            ]
+        )
+
+        self.simclr_transformation = transforms.Compose(
+            [   
+                # transforms.RandomCrop(32, padding=4),
+                transforms.RandomResizedCrop(size=32, scale=(0.2, 1.0)),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
+                transforms.RandomGrayscale(p=0.2),
+                # transforms.RandomApply([GaussianBlur([.1, 2.])], p=0.5),
+                transforms.ToTensor(),
+                transforms.Normalize(norm_mean, norm_std),
+            ]
+        )
+
+        self.inet_transform = transforms.Compose([
+            transforms.Resize((299, 299)),  
+            *self.train_transformation.transforms
+        ])
+
+        self.inet_simclr_transform = transforms.Compose([
+            transforms.Resize((299, 299)), 
+            transforms.RandomResizedCrop(size=299, scale=(0.2, 1.0)),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.ToTensor(),
+            transforms.Normalize(norm_mean, norm_std),
+        ])
 
     def create_contrastive_transform(self):
 
         if self.encoder == ENC_INET:
-            self.transformation_train = inet_transform
+            self.transformation_train = self.inet_transform
 
             if self.ssl_method in [SSL_SIMCLR, SSL_SIMSIAM, SSL_VICREG]:
-                self.transformation_test = inet_transform
+                self.transformation_test = self.inet_transform
                 self.transformation_contrastive = SimCLRTransformations(
                     n_views=2,
                     include_original=True,
-                    simclr_transform=inet_simclr_transform,
-                    base_transform=inet_transform
+                    simclr_transform=self.inet_simclr_transform,
+                    base_transform=self.inet_transform,
+                    dataset_name=self.dataset_name
                 )
 
             elif self.ssl_method == SSL_ROTATION:
-                self.transformation_test = inet_transform
-                self.transformation_contrastive = inet_transform
+                self.transformation_test = self.inet_transform
+                self.transformation_contrastive = self.inet_transform
             else:
                 raise NotImplementedError("transformation not implemented yet")
 
         else:
-            self.transformation_train = train_transformation
+            self.transformation_train = self.train_transformation
 
             if self.ssl_method in [SSL_SIMCLR, SSL_SIMSIAM, SSL_VICREG]:
-                self.transformation_test = test_transformation
+                self.transformation_test = self.test_transformation
                 self.transformation_contrastive = SimCLRTransformations(
                     n_views=2,
-                    include_original=True
+                    include_original=True,
+                    dataset_name=self.dataset_name
                 )
             elif self.ssl_method == SSL_ROTATION:
-                self.transformation_test = test_transformation
-                self.transformation_contrastive = train_transformation
+                self.transformation_test = self.test_transformation
+                self.transformation_contrastive = self.train_transformation
             else:
                 raise NotImplementedError("transformation not implemented yet")
 
