@@ -90,7 +90,7 @@ class NNTrain:
         if self.encoder_name == ENC_VGG:
             self.encoder = VGGEncoder()
 
-        elif self.encoder_name in [ENC_RESNET18, ENC_RESNET50, ENC_RESNET101, ENC_RESNET50_PT]:
+        elif self.encoder_name in [ENC_RESNET18, ENC_RESNET18_PT ,ENC_RESNET50, ENC_RESNET101, ENC_RESNET50_PT]:
             self.encoder = ResNetEncoder(model_type=self.encoder_name)
 
         elif self.encoder_name == ENC_VIT_TINY:
@@ -113,8 +113,10 @@ class NNTrain:
         
         elif self.encoder_name == ENC_CUSTOMRESNET:
             self.encoder = CustomResNet()
-        
-    
+
+        elif self.encoder_name == ENC_CONVNET:
+            self.encoder = ConvNetEncoder()
+
     def init_model_trainer(self):
 
         if self.model_name == MOD_SUPERVISED:

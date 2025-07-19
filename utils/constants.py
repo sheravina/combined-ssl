@@ -19,6 +19,7 @@ SSL_ROTATION = "rotation"
 ENC_VGG = "vgg"
 ENC_RESNET18 = "resnet18"
 ENC_RESNET50 = "resnet50"
+ENC_RESNET18_PT = "resnet18pt"
 ENC_RESNET50_PT = "resnet50pt"
 ENC_RESNET101 = "resnet101"
 ENC_MNETV3 = "mnet"
@@ -29,6 +30,7 @@ ENC_VIT_TINY = "vit_tiny"
 ENC_VIT_SMALL = "vit_small"
 ENC_VIT_BASE = "vit_base"
 ENC_CUSTOMRESNET = "custom"
+ENC_CONVNET = "convnet"
 
 
 # Model Name
