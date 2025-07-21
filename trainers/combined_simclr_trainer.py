@@ -21,7 +21,7 @@ class CombinedSimCLRTrainer(BaseCombinedTrainer):
         lr_scheduler,
         epochs,
         temperature=0.5,
-        alpha=1,
+        alpha=0.5,
         save_dir=None
     ):
         """
@@ -70,7 +70,7 @@ class CombinedSimCLRTrainer(BaseCombinedTrainer):
             sup_loss += supervised_loss.item()
 
             # Combined loss
-            loss = 0.5 * contrastive_loss + self.alpha * supervised_loss
+            loss = contrastive_loss + self.alpha * supervised_loss
             train_loss += loss.item()
 
             pred_labels = pred.argmax(dim=1)
