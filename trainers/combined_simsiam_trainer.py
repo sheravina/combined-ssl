@@ -47,7 +47,7 @@ class CombinedSimSiamTrainer(BaseCombinedTrainer):
             sup_loss += supervised_loss.item()
 
             # Combined loss
-            loss = self.alpha * contrastive_loss + supervised_loss
+            loss = contrastive_loss + self.alpha * supervised_loss
             train_loss += loss.item()
             pred_labels = pred.argmax(dim=1)
             train_acc += ((pred_labels == labels).sum().item()/len(pred_labels))
